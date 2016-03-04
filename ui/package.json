@@ -1,0 +1,39 @@
+{
+  "name": "recipe",
+  "version": "1.0.0",
+  "description": "recipe site for easy to read presentation ",
+  "main": "app.js",
+  "watch": {
+    "build": [
+      "src/*.js"
+    ]
+  },
+  "scripts": {
+    "bwfy": "browserify -t [babelify --presets[es2015]] src/app.js -o dist/js/app.js",
+    "build": "npm -s run lint && npm -s run bwfy && cp vendor/* dist/js/",
+    "lint": "clear && ./node_modules/.bin/jshint ./src/*.js || true",
+    "test": "karma start test/karma.conf.js",
+    "serve": "cd dist && python -m SimpleHTTPServer 8000",
+    "watch": "npm-watch"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-cli": "^6.5.1",
+    "babel-core": "^6.5.2",
+    "babel-preset-es2015": "^6.5.0",
+    "babelify": "^7.2.0",
+    "browserify": "^13.0.0",
+    "jasmine-core": "^2.4.1",
+    "jshint": "^2.9.1",
+    "karma": "^0.13.21",
+    "karma-browserify": "^5.0.2",
+    "karma-chrome-launcher": "^0.2.2",
+    "karma-jasmine": "^0.3.7",
+    "karma-phantomjs-launcher": "^1.0.0",
+    "karma-spec-reporter": "0.0.24",
+    "npm-watch": "^0.1.1",
+    "phantomjs-prebuilt": "^2.1.4",
+    "watchify": "^3.7.0"
+  }
+}

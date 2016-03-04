@@ -44,9 +44,10 @@ $(document).ready(function () {
   console.log('ready');
 
   $('.plant-container').click(function (el) {
-    debugger;
-    var plantid = this[0].attrs('id').replace('plant-');
-    console.log(this, el);
+    var plantid = parseInt(this.getAttribute('id').replace('plant-', ''), 10);
+    var plant = plants[plantid];
+    console.log(plant);
+    console.log(JSON.stringify(plant.genes, null, 2));
   });
 });
 
@@ -266,7 +267,7 @@ var Plant = function () {
     key: 'recurseDrawStems',
     value: function recurseDrawStems(level, start, thickness) {
       var branches = [];
-      var angle = this.genes.get('stem', 'angle');
+      var angle = this.genes.get('stem', 'angle')[level];
       var count = this.genes.get('stem', 'counts')[level] & 7;
       var length = this.genes.get('stem', 'lengths')[level] & 63;
       var startAngle = (count - 1) * angle / -2;
@@ -328,7 +329,7 @@ var PLANT_GENES = {
   },
   stem: {
     thickness: 8,
-    angle: 8,
+    angle: [MAX_DEPTH, 8],
     counts: [MAX_DEPTH, 8],
     lengths: [MAX_DEPTH, 8],
     colors: [MAX_DEPTH * 3, 24],

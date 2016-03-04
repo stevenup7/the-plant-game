@@ -45,8 +45,9 @@ $(document).ready(() => {
   console.log('ready');
 
   $('.plant-container').click(function(el) {
-    debugger;
-    var plantid = this[0].attrs('id').replace('plant-');
-    console.log(this, el);
+    var plantid = parseInt(this.getAttribute('id').replace('plant-', ''), 10);
+    var plant = plants[plantid];
+    console.log(plant);
+    console.log(JSON.stringify(plant.genes, null, 2));
   });
 });

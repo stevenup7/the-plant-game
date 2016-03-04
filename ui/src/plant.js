@@ -15,7 +15,7 @@ class Plant {
 
   recurseDrawStems (level, start, thickness) {
     var branches = [];
-    var angle = this.genes.get('stem', 'angle');
+    var angle = this.genes.get('stem', 'angle')[level];
     var count = this.genes.get('stem', 'counts')[level] & 7;
     var length = this.genes.get('stem', 'lengths')[level] & 63;
     var startAngle =((count-1)* angle)/-2;
@@ -77,7 +77,7 @@ var PLANT_GENES = {
   },
   stem: {
     thickness: 8,
-    angle: 8,
+    angle: [MAX_DEPTH, 8],
     counts: [MAX_DEPTH, 8],
     lengths: [MAX_DEPTH, 8],
     colors: [MAX_DEPTH * 3, 24],

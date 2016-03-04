@@ -21,15 +21,9 @@ class Plant {
     var startAngle =((count-1)* angle)/-2;
 
     for(var x=0; x< count; x++) {
-
       branches[x] = new Line(start.p2, start.pointAtAngleDeg(startAngle, length));
-
-      // console.log(branches[x].toString());
-
       startAngle = startAngle + angle;
-
       this.drawLine(branches[x], thickness, level);
-
       if (level < 4) {
         this.recurseDrawStems(level +1, branches[x], thickness );
       }

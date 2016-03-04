@@ -18,7 +18,6 @@ class Gene {
           );
         }
       } else {
-        console.log(attr);
         this._values[attr] = randIntFunc(0, Math.pow(2, value));
       }
     });

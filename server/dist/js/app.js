@@ -1,12 +1,10 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
-console.log('this is the app');
-
 var Plant = require('./plant');
 
 var CONSTS = {
-  NUM_PLANTS: 1000
+  NUM_PLANTS: 100
 };
 
 var plants = [];
@@ -21,18 +19,11 @@ function init() {
   for (var i = 0; i < CONSTS.NUM_PLANTS; i++) {
     plantCanvas = document.createElement('div');
     plantCanvas.setAttribute('id', 'plant-' + i);
-    // plantCanvas.setAttribute('version', '1.1');
-    // plantCanvas.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     plantCanvas.className = 'plant-container pure-u-1-5';
 
     canvasContainer.appendChild(plantCanvas);
     width = plantCanvas.clientWidth;
     height = plantCanvas.clientHeight;
-
-    // svgEl = document.createElement('svg');
-    // svgEl.setAttribute('width', width + 'px');
-    // svgEl.setAttribute('height', height + 'px');
-    // svgEl.setAttribute('id', 'plant-svg-' + i);
 
     svgEl = Snap(width, height);
     svgEl.prependTo(plantCanvas);
@@ -47,8 +38,17 @@ function draw() {
   }
 }
 
-init();
-draw();
+$(document).ready(function () {
+  init();
+  draw();
+  console.log('ready');
+
+  $('.plant-container').click(function (el) {
+    debugger;
+    var plantid = this[0].attrs('id').replace('plant-');
+    console.log(this, el);
+  });
+});
 
 },{"./plant":4}],2:[function(require,module,exports){
 'use strict';
@@ -80,7 +80,6 @@ var Gene = function () {
             _this._values[attr].push(randIntFunc(0, Math.pow(2, value[1])));
           }
         } else {
-          console.log(attr);
           _this._values[attr] = randIntFunc(0, Math.pow(2, value));
         }
       });
@@ -273,15 +272,9 @@ var Plant = function () {
       var startAngle = (count - 1) * angle / -2;
 
       for (var x = 0; x < count; x++) {
-
         branches[x] = new Line(start.p2, start.pointAtAngleDeg(startAngle, length));
-
-        // console.log(branches[x].toString());
-
         startAngle = startAngle + angle;
-
         this.drawLine(branches[x], thickness, level);
-
         if (level < 4) {
           this.recurseDrawStems(level + 1, branches[x], thickness);
         }

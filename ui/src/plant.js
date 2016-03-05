@@ -13,6 +13,14 @@ class Plant {
     }
   }
 
+  swap (otherPlant) {
+    var temp = {
+      genes: otherPlant.genes
+    };
+    otherPlant.genes = this.genes;
+    this.genes = temp.genes;
+  }
+
   recurseDrawStems (level, start, thickness) {
     var branches = [];
     var angle = this.genes.get('stem', 'angle')[level];

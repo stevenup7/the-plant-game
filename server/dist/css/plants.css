@@ -5,6 +5,13 @@
     background-color: white;
 }
 
+.plant-container.selected{
+    box-sizing: border-box;
+    height: 200px;
+    border: 1px solid red;
+    background-color: white;
+}
+
 
 .plant-container svg{
     width: 100%;

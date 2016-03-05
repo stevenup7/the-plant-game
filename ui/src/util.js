@@ -1,3 +1,5 @@
+var seedrandom = require('../vendor/seedrandom.min');
+
 function toBinaryStr (num, bits=32) {
   var x = 0;
   var op = '';
@@ -13,6 +15,7 @@ function randomInt (min, max) {
 }
 
 module.exports = {
+  seedrandom: seedrandom,
   randomInt: randomInt,
   toBinary: toBinaryStr
 };

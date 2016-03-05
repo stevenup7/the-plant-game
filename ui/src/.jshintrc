@@ -3,5 +3,5 @@
    "esversion": 6,
    "eqeqeq": true,
    "strict": "implied",
-   "predef": ["require", "console", "alert", "module", "_", "Snap"]
+   "predef": ["require", "console", "alert", "module", "_", "Snap", "$"]
 }

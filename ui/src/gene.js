@@ -8,20 +8,58 @@ class Gene {
     this._values = {};
   }
 
-  randomize (randIntFunc) {
+  randomize () {
     _.each(this._defn, (value, attr) => {
       if (_.isArray(value)) {
         this._values[attr] = [];
         for(var i = 0; i < value[0]; i++) {
           this._values[attr].push(
-            randIntFunc(0, Math.pow(2, value[1]))
+            randomInt(0, Math.pow(2, value[1]))
           );
         }
       } else {
-        this._values[attr] = randIntFunc(0, Math.pow(2, value));
+        this._values[attr] = randomInt(0, Math.pow(2, value));
       }
     });
-    delete this._defn;
+  }
+
+  copyValue (attr) {
+    return JSON.parse(JSON.stringify(this._values));
+  }
+
+  mutate (mutationChance) {
+
+  }
+
+  doBreed (otherGene, childGene, thisIsSource, xoverChance) {
+    _.each(this._defn, (value, attr) => {
+
+      if (_.isArray(this._values[attr])) {
+        childGene._values[attr] = [];
+        for(var i = 0; i < value[0]; i++) {
+          if(thisIsSource) {
+            childGene._values[attr].push(this._values[attr][i]);
+          } else {
+            childGene._values[attr].push(otherGene._values[attr][i]);
+          }
+
+          if (Math.random() < xoverChance) {
+            thisIsSource = !thisIsSource;
+          }
+
+        }
+      } else {
+        if(thisIsSource) {
+          childGene._values[attr] = this._values[attr];
+        } else {
+          childGene._values[attr] = otherGene._values[attr];
+        }
+
+        if (Math.random() < xoverChance) {
+          thisIsSource = !thisIsSource;
+        }
+      }
+    });
   }
 
   get (attr) {
@@ -33,14 +71,34 @@ class GeneSet {
 
   constructor (geneDefinition) {
     this._genes = {};
+    this._geneDefinition = geneDefinition;
+
     _.each(geneDefinition, (attr, key) => {
       this._genes[key] = new Gene(key, attr);
     });
   }
 
-  randomize (randIntFunc = randomInt) {
+  breed (otherGeneSet, xoverChance, mutationChance) {
+    var childGeneSet = new  GeneSet(this._geneDefinition);
+    var thisIsSource = Math.random() > 0.5;
+
+    _.each(this._geneDefinition, (attr, key) => {
+      this._genes[key].doBreed(
+        otherGeneSet._genes[key], childGeneSet._genes[key], thisIsSource, xoverChance);
+
+      childGeneSet._genes[key].mutate(mutationChance);
+
+      // crossing over
+      if (Math.random() < xoverChance) {
+        thisIsSource = !thisIsSource;
+      }
+    });
+    return childGeneSet;
+  }
+
+  randomize () {
     _.each(this._genes, (gene) => {
-      gene.randomize(randIntFunc);
+      gene.randomize();
     });
   }
 
@@ -51,5 +109,6 @@ class GeneSet {
 
 module.exports = {
   GeneSet: GeneSet,
-  Gene: Gene
+  Gene: Gene,
+  randomInt: randomInt
 };

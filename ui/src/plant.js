@@ -24,7 +24,13 @@ class Plant {
   recurseDrawStems (level, start, thickness) {
     var branches = [];
     var angle = this.genes.get('stem', 'angle')[level];
-    var count = this.genes.get('stem', 'counts')[level] & 7;
+    var count;
+    if(level === this.depth) {
+      // more stems on last level
+      count = this.genes.get('stem', 'counts')[level] & 15;
+    } else {
+      count = this.genes.get('stem', 'counts')[level] & 7;
+    }
     var length = this.genes.get('stem', 'lengths')[level] & 63;
     var startAngle =((count-1)* angle)/-2;
 
@@ -32,7 +38,7 @@ class Plant {
       branches[x] = new Line(start.p2, start.pointAtAngleDeg(startAngle, length));
       startAngle = startAngle + angle;
       this.drawLine(branches[x], thickness, level);
-      if (level < 4) {
+      if (level < this.depth) {
         this.recurseDrawStems(level +1, branches[x], thickness );
       }
     }
@@ -51,15 +57,19 @@ class Plant {
 
   drawStem () {
     this.root = new Line(new Point(this._width/2, this._height),
-                         new Point(this._width/2, this._height -20));
-
-    this.drawLine(this.root, 10, 1);
+                         new Point(this._width/2, this._height -1));
 
     var thickness = this.genes.get('stem', 'thickness') & 3;
+
+    // how deep to recurse
+    this.depth = this.genes.get('stem', 'depth') % 4;
+    this.drawLine(this.root, thickness, 1);
+
     this.recurseDrawStems(1, this.root, thickness);
   }
 
   draw () {
+    // return false;
     this._width = this._canvas.node.clientWidth;
     this._height = this._canvas.node.clientHeight;
     this.stemColors = [];
@@ -90,7 +100,7 @@ var PLANT_GENES = {
     lengths: [MAX_DEPTH, 8],
     colors: [MAX_DEPTH * 3, 24],
     alphas: [MAX_DEPTH, 9],
-    number: 8
+    depth: 8
   }
 };
 

@@ -20280,7 +20280,7 @@ exports.createContext = Script.createContext = function (context) {
 var Plant = require('./plant');
 
 var CONSTS = {
-  NUM_PLANTS: 30
+  NUM_PLANTS: 40
 };
 
 var plants = [];
@@ -20307,7 +20307,10 @@ function createPlantSet(containerEl, numPlants, elementIdPrefix, holdingArray) {
     plantCanvas = document.createElement('div');
     plantCanvas.setAttribute('id', elementIdPrefix + i);
     plantCanvas.className = 'plant-container pure-u-1-5';
-
+    plantCanvas.setAttribute('draggable', true);
+    plantCanvas.setAttribute('ondragstart', 'plantDrag(event)');
+    plantCanvas.setAttribute('ondrop', 'plantDrop(event)');
+    plantCanvas.setAttribute('ondragover', 'plantDragOver(event)');
     containerEl.appendChild(plantCanvas);
     width = plantCanvas.clientWidth;
     height = plantCanvas.clientHeight;
@@ -20319,7 +20322,68 @@ function createPlantSet(containerEl, numPlants, elementIdPrefix, holdingArray) {
   }
 }
 
+function plantDrag(ev) {
+  console.log(arguments);
+  ev.dataTransfer.dropEffect = 'move';
+  ev.dataTransfer.setData("text/plain", ev.target.id);
+}
+
+function plantDragOver(ev) {
+  ev.preventDefault();
+  var draggingId = ev.dataTransfer.getData("text");
+  var dropId = ev.target.id;
+}
+
+function getPlantById(id) {
+  var stripString = 'plant-';
+  var srcArray = plants;
+  if (id.indexOf('parent') === 0) {
+    stripString = 'parent-';
+    srcArray = parents;
+  }
+  // convert id to int
+  id = parseInt(id.replace(stripString, ''), 10);
+  // look it up in the right src array
+  return srcArray[id];
+}
+
+function plantDrop(ev) {
+  ev.preventDefault();
+  var draggingId = ev.dataTransfer.getData("text");
+  var dropId = ev.currentTarget.id;
+  if (ev.shiftKey === true) {
+    swap(draggingId, dropId);
+  } else {
+    console.log('breed', draggingId, dropId);
+    breed(draggingId, dropId);
+  }
+}
+
+function breed(firstId, secondId) {
+  var plant1Genes = getPlantById(firstId).genes.clone();
+  var plant2Genes = getPlantById(secondId).genes.clone();
+
+  for (var i = 0; i < CONSTS.NUM_PLANTS; i++) {
+    plants[i].genes = plant1Genes.breed(plant2Genes, xoverChance, 0.01);
+    // clear out the svg so can redraw
+    drawPlant(i);
+  }
+}
+
+function swap(firstId, secondId) {
+  var plant1 = getPlantById(firstId);
+  var plant2 = getPlantById(secondId);
+  plant1.swap(plant2);
+  draw();
+}
+
+window.plantDrag = plantDrag;
+window.plantDragOver = plantDragOver;
+window.plantDrop = plantDrop;
+
 function draw() {
+  $('svg *').remove();
+
   for (var i = 0; i < CONSTS.NUM_PLANTS; i++) {
     plants[i].draw();
   }
@@ -20343,20 +20407,20 @@ $(document).ready(function () {
   draw();
   console.log('ready');
 
-  $('#redraw').click(function (event) {
+  function randomize() {
     for (var i = 0; i < CONSTS.NUM_PLANTS; i++) {
       plants[i].genes.randomize();
       // clear out the svg so can redraw
       drawPlant(i);
     }
+  }
+
+  $('#randomize').click(function (event) {
+    randomize();
   });
 
   $('#breed').click(function (event) {
-    for (var i = 0; i < CONSTS.NUM_PLANTS; i++) {
-      plants[i].genes = parents[0].genes.breed(parents[1].genes, xoverChance);
-      // clear out the svg so can redraw
-      drawPlant(i);
-    }
+    breed('parent-1', 'parent-2');
   });
 
   $(document).keydown(function (ev) {
@@ -20364,7 +20428,7 @@ $(document).ready(function () {
     // track which of the 1 -5 keys is down
     if (digit > 0 && digit < 6) {
       isDown[digit - 1] = true;
-      selectParent(digit - 1);
+      // selectParent(digit-1);
     }
   });
 
@@ -20373,38 +20437,47 @@ $(document).ready(function () {
     // track which of the 1 -5 keys is down
     if (digit > 0 && digit < 6) {
       isDown[digit - 1] = false;
-      selectParent(-1);
-    }
-  });
-
-  function selectParent(id) {
-    $('#parent-canvas .plant-container').removeClass('selected');
-    $("#parent-" + id).addClass('selected');
-    selectedParent = id;
-  }
-
-  $('.plant-container').click(function (event) {
-    var elID = this.getAttribute('id');
-    var parentid;
-    var plant;
-    var plantid;
-    var isParent = false;
-    var parentPlant;
-
-    if (elID.indexOf('parent') === 0) {
-      plantid = parseInt(elID.replace('parent-', ''), 10);
-      selectParent(plantid);
-      plant = parents[plantid];
+      // selectParent(-1);
     } else {
-      plantid = parseInt(elID.replace('plant-', ''), 10);
-      plant = plants[plantid];
-      parentPlant = parents[selectedParent];
-      plant.swap(parentPlant);
-      drawParent(selectedParent);
-      drawPlant(plantid);
-    }
-    console.log(JSON.stringify(plant.genes, null, 2));
+        var char = String.fromCharCode(ev.which);
+        console.log(char);
+        if (char === 'B') {
+          breed();
+        }
+        if (char === 'R') {
+          randomize();
+        }
+      }
   });
+
+  // function selectParent (id) {
+  //   $('#parent-canvas .plant-container').removeClass('selected');
+  //   $("#parent-" + id).addClass('selected');
+  //   selectedParent = id;
+  // }
+
+  // $('.plant-container').click(function(event) {
+  //   var elID = this.getAttribute('id');
+  //   var parentid;
+  //   var plant;
+  //   var plantid;
+  //   var isParent = false;
+  //   var parentPlant;
+
+  //   if (elID.indexOf('parent') === 0) {
+  //     plantid = parseInt(elID.replace('parent-', ''), 10);
+  //     selectParent(plantid);
+  //     plant = parents[plantid];
+  //   } else {
+  //     plantid = parseInt(elID.replace('plant-', ''), 10);
+  //     plant = plants[plantid];
+  //     parentPlant = parents[selectedParent];
+  //     plant.swap(parentPlant);
+  //     drawParent(selectedParent);
+  //     drawPlant(plantid);
+  //   }
+  //   console.log(JSON.stringify(plant.genes, null, 2));
+  // });
 });
 
 },{"./plant":136}],134:[function(require,module,exports){
@@ -20430,14 +20503,14 @@ var Gene = function () {
     value: function randomize() {
       var _this = this;
 
-      _.each(this._defn, function (value, attr) {
-        if (_.isArray(value)) {
-          _this._values[attr] = [];
-          for (var i = 0; i < value[0]; i++) {
-            _this._values[attr].push(randomInt(0, Math.pow(2, value[1])));
+      _.each(this._defn, function (definitionValue, subUnitName) {
+        if (_.isArray(definitionValue)) {
+          _this._values[subUnitName] = [];
+          for (var i = 0; i < definitionValue[0]; i++) {
+            _this._values[subUnitName].push(randomInt(0, Math.pow(2, definitionValue[1])));
           }
         } else {
-          _this._values[attr] = randomInt(0, Math.pow(2, value));
+          _this._values[subUnitName] = randomInt(0, Math.pow(2, definitionValue));
         }
       });
     }
@@ -20448,19 +20521,38 @@ var Gene = function () {
     }
   }, {
     key: 'mutate',
-    value: function mutate(mutationChance) {}
-  }, {
-    key: 'doBreed',
-    value: function doBreed(otherGene, childGene, thisIsSource, xoverChance) {
+    value: function mutate(mutationChance) {
       var _this2 = this;
 
-      _.each(this._defn, function (value, attr) {
+      _.each(this._defn, function (definitionValue, subUnitName) {
+        if (_.isArray(definitionValue)) {
+          for (var i = 0; i < definitionValue[0]; i++) {
+            if (Math.random() < mutationChance) {
+              console.log('mutation');
+              _this2._values[subUnitName][i] = randomInt(0, Math.pow(2, definitionValue[1]));
+            }
+          }
+        } else {
+          if (Math.random() < mutationChance) {
+            // randomize the value
+            console.log('mutation');
+            _this2._values[subUnitName] = randomInt(0, Math.pow(2, definitionValue));
+          }
+        }
+      });
+    }
+  }, {
+    key: 'doBreed',
+    value: function doBreed(otherGene, childGene, thisIsSource, xoverChance, mutationChance) {
+      var _this3 = this;
 
-        if (_.isArray(_this2._values[attr])) {
+      _.each(this._defn, function (value, attr) {
+        if (_.isArray(_this3._values[attr])) {
+          var arrayLen = value[0];
           childGene._values[attr] = [];
-          for (var i = 0; i < value[0]; i++) {
+          for (var i = 0; i < arrayLen; i++) {
             if (thisIsSource) {
-              childGene._values[attr].push(_this2._values[attr][i]);
+              childGene._values[attr].push(_this3._values[attr][i]);
             } else {
               childGene._values[attr].push(otherGene._values[attr][i]);
             }
@@ -20471,7 +20563,7 @@ var Gene = function () {
           }
         } else {
           if (thisIsSource) {
-            childGene._values[attr] = _this2._values[attr];
+            childGene._values[attr] = _this3._values[attr];
           } else {
             childGene._values[attr] = otherGene._values[attr];
           }
@@ -20481,11 +20573,21 @@ var Gene = function () {
           }
         }
       });
+      childGene.mutate(mutationChance);
     }
   }, {
     key: 'get',
     value: function get(attr) {
       return this._values[attr];
+    }
+  }, {
+    key: 'clone',
+    value: function clone() {
+      // make a new clone
+      var theClone = new Gene(this._name, this._defn);
+      // clone values into new object
+      theClone._values = _.clone(this._values);
+      return theClone;
     }
   }]);
 
@@ -20493,31 +20595,45 @@ var Gene = function () {
 }();
 
 var GeneSet = function () {
+
+  // initGenes false is used by clone
+
   function GeneSet(geneDefinition) {
-    var _this3 = this;
+    var initGenes = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
 
     _classCallCheck(this, GeneSet);
 
     this._genes = {};
-    this._geneDefinition = geneDefinition;
-
-    _.each(geneDefinition, function (attr, key) {
-      _this3._genes[key] = new Gene(key, attr);
-    });
+    if (geneDefinition) {
+      // don't do anything if no definition is passed in
+      this.parseDefinition(geneDefinition, initGenes);
+    }
   }
 
   _createClass(GeneSet, [{
-    key: 'breed',
-    value: function breed(otherGeneSet, xoverChance, mutationChance) {
+    key: 'parseDefinition',
+    value: function parseDefinition(geneDefinition, initGenes) {
       var _this4 = this;
+
+      this._geneDefinition = geneDefinition;
+      if (initGenes) {
+        _.each(geneDefinition, function (attr, key) {
+          _this4._genes[key] = new Gene(key, attr);
+        });
+      }
+    }
+  }, {
+    key: 'breed',
+    value: function breed(otherGeneSet, xoverChance) {
+      var _this5 = this;
+
+      var mutationChance = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
       var childGeneSet = new GeneSet(this._geneDefinition);
       var thisIsSource = Math.random() > 0.5;
 
       _.each(this._geneDefinition, function (attr, key) {
-        _this4._genes[key].doBreed(otherGeneSet._genes[key], childGeneSet._genes[key], thisIsSource, xoverChance);
-
-        childGeneSet._genes[key].mutate(mutationChance);
+        _this5._genes[key].doBreed(otherGeneSet._genes[key], childGeneSet._genes[key], thisIsSource, xoverChance, mutationChance);
 
         // crossing over
         if (Math.random() < xoverChance) {
@@ -20531,6 +20647,38 @@ var GeneSet = function () {
     value: function randomize() {
       _.each(this._genes, function (gene) {
         gene.randomize();
+      });
+    }
+  }, {
+    key: 'clone',
+    value: function clone() {
+      var theClone = new GeneSet(this._geneDefinition, false);
+      _.each(this._genes, function (gene) {
+        theClone._genes[gene._name] = gene.clone();
+      });
+      return theClone;
+    }
+  }, {
+    key: 'toJSON',
+    value: function toJSON() {
+      var strobj = {
+        definition: this._geneDefinition,
+        geneValues: {}
+      };
+      _.each(this._genes, function (gene) {
+        strobj.geneValues[gene._name] = gene._values;
+      });
+      return JSON.stringify(strobj);
+    }
+  }, {
+    key: 'fromJSON',
+    value: function fromJSON(jsonString) {
+      var data = JSON.parse(jsonString);
+      this.parseDefinition(data.definition, true);
+
+      _.each(this._genes, function (gene) {
+
+        gene._values = data.geneValues[gene._name];
       });
     }
   }, {
@@ -20694,7 +20842,13 @@ var Plant = function () {
     value: function recurseDrawStems(level, start, thickness) {
       var branches = [];
       var angle = this.genes.get('stem', 'angle')[level];
-      var count = this.genes.get('stem', 'counts')[level] & 7;
+      var count;
+      if (level === this.depth) {
+        // more stems on last level
+        count = this.genes.get('stem', 'counts')[level] & 15;
+      } else {
+        count = this.genes.get('stem', 'counts')[level] & 7;
+      }
       var length = this.genes.get('stem', 'lengths')[level] & 63;
       var startAngle = (count - 1) * angle / -2;
 
@@ -20702,7 +20856,7 @@ var Plant = function () {
         branches[x] = new Line(start.p2, start.pointAtAngleDeg(startAngle, length));
         startAngle = startAngle + angle;
         this.drawLine(branches[x], thickness, level);
-        if (level < 4) {
+        if (level < this.depth) {
           this.recurseDrawStems(level + 1, branches[x], thickness);
         }
       }
@@ -20717,16 +20871,20 @@ var Plant = function () {
   }, {
     key: 'drawStem',
     value: function drawStem() {
-      this.root = new Line(new Point(this._width / 2, this._height), new Point(this._width / 2, this._height - 20));
-
-      this.drawLine(this.root, 10, 1);
+      this.root = new Line(new Point(this._width / 2, this._height), new Point(this._width / 2, this._height - 1));
 
       var thickness = this.genes.get('stem', 'thickness') & 3;
+
+      // how deep to recurse
+      this.depth = this.genes.get('stem', 'depth') % 4;
+      this.drawLine(this.root, thickness, 1);
+
       this.recurseDrawStems(1, this.root, thickness);
     }
   }, {
     key: 'draw',
     value: function draw() {
+      // return false;
       this._width = this._canvas.node.clientWidth;
       this._height = this._canvas.node.clientHeight;
       this.stemColors = [];
@@ -20760,7 +20918,7 @@ var PLANT_GENES = {
     lengths: [MAX_DEPTH, 8],
     colors: [MAX_DEPTH * 3, 24],
     alphas: [MAX_DEPTH, 9],
-    number: 8
+    depth: 8
   }
 };
 

@@ -9,16 +9,16 @@ class Gene {
   }
 
   randomize () {
-    _.each(this._defn, (value, attr) => {
-      if (_.isArray(value)) {
-        this._values[attr] = [];
-        for(var i = 0; i < value[0]; i++) {
-          this._values[attr].push(
-            randomInt(0, Math.pow(2, value[1]))
+    _.each(this._defn, (definitionValue, subUnitName) => {
+      if (_.isArray(definitionValue)) {
+        this._values[subUnitName] = [];
+        for(var i = 0; i < definitionValue[0]; i++) {
+          this._values[subUnitName].push(
+            randomInt(0, Math.pow(2, definitionValue[1]))
           );
         }
       } else {
-        this._values[attr] = randomInt(0, Math.pow(2, value));
+        this._values[subUnitName] = randomInt(0, Math.pow(2, definitionValue));
       }
     });
   }
@@ -28,15 +28,32 @@ class Gene {
   }
 
   mutate (mutationChance) {
+    _.each(this._defn, (definitionValue, subUnitName) => {
+      if (_.isArray(definitionValue)) {
+        for(var i = 0; i < definitionValue[0]; i++) {
+          if(Math.random() < mutationChance) {
+            console.log('mutation');
+            this._values[subUnitName][i] = randomInt(0, Math.pow(2, definitionValue[1]));
+          }
+        }
+      } else {
+        if(Math.random() < mutationChance) {
+          // randomize the value
+          console.log('mutation');
+          this._values[subUnitName] = randomInt(0, Math.pow(2, definitionValue));
+        }
+
+      }
+    });
 
   }
 
-  doBreed (otherGene, childGene, thisIsSource, xoverChance) {
+  doBreed (otherGene, childGene, thisIsSource, xoverChance, mutationChance) {
     _.each(this._defn, (value, attr) => {
-
       if (_.isArray(this._values[attr])) {
+        var arrayLen = value[0];
         childGene._values[attr] = [];
-        for(var i = 0; i < value[0]; i++) {
+        for(var i = 0; i < arrayLen; i++) {
           if(thisIsSource) {
             childGene._values[attr].push(this._values[attr][i]);
           } else {
@@ -46,7 +63,6 @@ class Gene {
           if (Math.random() < xoverChance) {
             thisIsSource = !thisIsSource;
           }
-
         }
       } else {
         if(thisIsSource) {
@@ -60,33 +76,48 @@ class Gene {
         }
       }
     });
+    childGene.mutate(mutationChance);
   }
 
   get (attr) {
     return this._values[attr];
   }
+
+  clone () {
+    // make a new clone
+    var theClone = new Gene(this._name, this._defn);
+    // clone values into new object
+    theClone._values = _.clone(this._values);
+    return theClone;
+  }
 }
 
 class GeneSet {
 
-  constructor (geneDefinition) {
+  // initGenes false is used by clone
+  constructor (geneDefinition, initGenes=true) {
     this._genes = {};
-    this._geneDefinition = geneDefinition;
-
-    _.each(geneDefinition, (attr, key) => {
-      this._genes[key] = new Gene(key, attr);
-    });
+    if(geneDefinition) { // don't do anything if no definition is passed in
+      this.parseDefinition(geneDefinition, initGenes);
+    }
   }
 
-  breed (otherGeneSet, xoverChance, mutationChance) {
+  parseDefinition (geneDefinition, initGenes) {
+    this._geneDefinition = geneDefinition;
+    if(initGenes) {
+      _.each(geneDefinition, (attr, key) => {
+        this._genes[key] = new Gene(key, attr);
+      });
+    }
+  }
+
+  breed (otherGeneSet, xoverChance, mutationChance = 0) {
     var childGeneSet = new  GeneSet(this._geneDefinition);
     var thisIsSource = Math.random() > 0.5;
 
     _.each(this._geneDefinition, (attr, key) => {
       this._genes[key].doBreed(
-        otherGeneSet._genes[key], childGeneSet._genes[key], thisIsSource, xoverChance);
-
-      childGeneSet._genes[key].mutate(mutationChance);
+        otherGeneSet._genes[key], childGeneSet._genes[key], thisIsSource, xoverChance, mutationChance);
 
       // crossing over
       if (Math.random() < xoverChance) {
@@ -100,6 +131,36 @@ class GeneSet {
     _.each(this._genes, (gene) => {
       gene.randomize();
     });
+  }
+
+  clone () {
+    var theClone = new GeneSet(this._geneDefinition, false);
+    _.each(this._genes, (gene) => {
+      theClone._genes[gene._name] = gene.clone();
+    });
+    return theClone;
+  }
+
+  toJSON () {
+    var strobj = {
+      definition: this._geneDefinition,
+      geneValues: {}
+    };
+    _.each(this._genes, (gene) => {
+      strobj.geneValues[gene._name] = gene._values;
+    });
+    return JSON.stringify(strobj);
+  }
+
+  fromJSON (jsonString) {
+    var data = JSON.parse(jsonString);
+    this.parseDefinition(data.definition, true);
+
+    _.each(this._genes, (gene) => {
+
+      gene._values = data.geneValues[gene._name];
+    });
+
   }
 
   get (gene, attr) {

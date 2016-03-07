@@ -60,8 +60,54 @@ describe('Genes Module', function () {
     expect(genes1.get('a1', 'a14')[3]).toBe(119);
     expect(genes2.get('a1', 'a14')[3]).toBe(202);
     expect(newChild.get('a1', 'a14')[3]).toBe(202);  // <- xover happened
+  });
+
+
+  it('should be able to clone itself', function () {
+    Math.seedrandom("test");
+    var genes1 = new GeneSet(TEST_GENES);
+    genes1.randomize();
+
+    var genes2 = genes1.clone();
+
+    expect(genes1.get('a1', 'a11')).toBe(genes2.get('a1', 'a11'));
+    expect(genes1.get('a1', 'a12')).toBe(genes2.get('a1', 'a12'));
+    expect(genes1.get('a1', 'a13')).toBe(genes2.get('a1', 'a13'));
+
+    expect(genes1.get('a1', 'a14')[0]).toBe(genes2.get('a1', 'a14')[0]);
+    expect(genes1.get('a1', 'a14')[3]).toBe(genes2.get('a1', 'a14')[3]);
+
+    expect(genes1.get('a2', 'a21')).toBe(genes2.get('a2', 'a21'));
+  });
+
+  it('should load and save from JSON' , function () {
+    Math.seedrandom("test");
+    var genes1 = new GeneSet(TEST_GENES);
+    genes1.randomize();
+    var jsonString  = genes1.toJSON();
+    var objectifiedVersion = JSON.parse(jsonString);
+
+    expect(objectifiedVersion.definition.a1.a11).toBe(8);
+    expect(objectifiedVersion.geneValues.a1.a11).toBe(224);
+    expect(objectifiedVersion.geneValues.a1.a14[0]).toBe(78);
+
+    console.log("objectifiedVersion", JSON.stringify(objectifiedVersion, null,2));
+
+
+    var genes2 = new GeneSet();
+    genes2.fromJSON(jsonString);
+
+    expect(genes1.get('a1', 'a11')).toBe(genes2.get('a1', 'a11'));
+    expect(genes1.get('a1', 'a12')).toBe(genes2.get('a1', 'a12'));
+    expect(genes1.get('a1', 'a13')).toBe(genes2.get('a1', 'a13'));
+    expect(genes1.get('a1', 'a14')[0]).toBe(genes2.get('a1', 'a14')[0]);
+    expect(genes1.get('a1', 'a14')[3]).toBe(genes2.get('a1', 'a14')[3]);
+
+    expect(genes1.get('a2', 'a21')).toBe(genes2.get('a2', 'a21'));
+
 
   });
+
 
   var TEST_GENES = {
     a1: {
@@ -71,7 +117,7 @@ describe('Genes Module', function () {
       a14: [4,8]
     },
     a2: {
-      thickness: 8
+      a21: 8
     }
   };
 

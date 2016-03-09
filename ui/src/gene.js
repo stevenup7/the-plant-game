@@ -2,24 +2,58 @@ var randomInt = require('./util').randomInt;
 
 class Gene {
 
-  constructor (name, def) {
+  constructor (name, definition) {
     this._name = name;
-    this._defn = def;
+    this.definition = definition;
     this._values = {};
   }
 
-  randomize () {
-    _.each(this._defn, (definitionValue, subUnitName) => {
-      if (_.isArray(definitionValue)) {
-        this._values[subUnitName] = [];
-        for(var i = 0; i < definitionValue[0]; i++) {
-          this._values[subUnitName].push(
-            randomInt(0, Math.pow(2, definitionValue[1]))
-          );
-        }
-      } else {
-        this._values[subUnitName] = randomInt(0, Math.pow(2, definitionValue));
+  randomRGBA () {
+    return {
+      r: randomInt(0,255),
+      g: randomInt(0,255),
+      b: randomInt(0,255),
+      a: randomInt(0,100) / 100
+    };
+  }
+
+  randomizeGene (definition, genename) {
+    var type = definition[0];
+    var min;
+    var max;
+    var i;
+    switch (type) {
+    case 'int':
+      min = definition[1];
+      max = definition[2];
+      this._values[genename] = randomInt(min, max);
+      break;
+    case 'intArray':
+      min = definition[2];
+      max = definition[3];
+      this._values[genename] = [];
+      for(i = 0; i < definition[1]; i++) {
+        this._values[genename][i] = randomInt(min, max);
       }
+      break;
+    case 'color':
+      this._values[genename] = this.randomRGBA();
+      break;
+    case 'colorArray':
+      this._values[genename] = [];
+      for(i = 0; i < definition[1]; i++) {
+        this._values[genename][i] = this.randomRGBA();
+      }
+      break;
+    case 'default':
+      throw('unknown type [' + type + ']');
+    }
+
+  }
+
+  randomize () {
+    _.each(this.definition, (definition, genename) => {
+      this.randomizeGene(definition, genename);
     });
   }
 
@@ -28,7 +62,7 @@ class Gene {
   }
 
   mutate (mutationChance) {
-    _.each(this._defn, (definitionValue, subUnitName) => {
+    _.each(this.definition, (definitionValue, subUnitName) => {
       if (_.isArray(definitionValue)) {
         for(var i = 0; i < definitionValue[0]; i++) {
           if(Math.random() < mutationChance) {
@@ -49,7 +83,7 @@ class Gene {
   }
 
   doBreed (otherGene, childGene, thisIsSource, xoverChance, mutationChance) {
-    _.each(this._defn, (value, attr) => {
+    _.each(this.definition, (value, attr) => {
       if (_.isArray(this._values[attr])) {
         var arrayLen = value[0];
         childGene._values[attr] = [];
@@ -85,7 +119,7 @@ class Gene {
 
   clone () {
     // make a new clone
-    var theClone = new Gene(this._name, this._defn);
+    var theClone = new Gene(this._name, this.definition);
     // clone values into new object
     theClone._values = _.clone(this._values);
     return theClone;
@@ -104,9 +138,10 @@ class GeneSet {
 
   parseDefinition (geneDefinition, initGenes) {
     this._geneDefinition = geneDefinition;
+
     if(initGenes) {
-      _.each(geneDefinition, (attr, key) => {
-        this._genes[key] = new Gene(key, attr);
+      _.each(geneDefinition, (geneDefinition, geneName) => {
+        this._genes[geneName] = new Gene(geneName, geneDefinition);
       });
     }
   }

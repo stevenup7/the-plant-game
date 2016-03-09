@@ -7,6 +7,7 @@ class Plant {
   constructor (canvas, randomInit = true) {
     this._canvas = canvas;
     this.genes = new GeneSet(PLANT_GENES);
+    this.leafNodes = [];
 
     if (randomInit) {
       this.genes.randomize();
@@ -27,10 +28,11 @@ class Plant {
     var count;
     if(level === this.depth) {
       // more stems on last level
-      count = this.genes.get('stem', 'counts')[level] & 15;
+      count = this.genes.get('stem', 'counts')[level] % 7;
     } else {
-      count = this.genes.get('stem', 'counts')[level] & 7;
+      count = this.genes.get('stem', 'counts')[level] % 6;
     }
+    count ++;
     var length = this.genes.get('stem', 'lengths')[level] & 63;
     var startAngle =((count-1)* angle)/-2;
 
@@ -40,6 +42,8 @@ class Plant {
       this.drawLine(branches[x], thickness, level);
       if (level < this.depth) {
         this.recurseDrawStems(level +1, branches[x], thickness );
+      } else {
+        this.leafNodes.push(branches[x].p2);
       }
     }
   }
@@ -62,10 +66,35 @@ class Plant {
     var thickness = this.genes.get('stem', 'thickness') & 3;
 
     // how deep to recurse
-    this.depth = this.genes.get('stem', 'depth') % 4;
+    this.depth = this.genes.get('stem', 'depth') % 4 + 1;
     this.drawLine(this.root, thickness, 1);
 
     this.recurseDrawStems(1, this.root, thickness);
+  }
+
+  drawLeaves () {
+    this.leafColor1 = 'rgba(' +
+      (this.genes.get('leaf', 'colors')[0] & 255) + ', ' +
+      (this.genes.get('leaf', 'colors')[1] & 255)  + ', ' +
+      (this.genes.get('leaf', 'colors')[2] & 255)  + ', ' +
+      (this.genes.get('leaf', 'alphas')[0] % 100 / 100) + ')';
+
+    this.leafColor2 = 'rgba(' +
+      (this.genes.get('leaf', 'colors')[3] & 255) + ', ' +
+      (this.genes.get('leaf', 'colors')[4] & 255)  + ', ' +
+      (this.genes.get('leaf', 'colors')[5] & 255)  + ', ' +
+      (this.genes.get('leaf', 'alphas')[1] % 100 / 100) + ')';
+
+    var leaf;
+    var leafSize = this.genes.get('leaf', 'size') & 15;
+    var leafStyle = this.genes.get('leaf', 'style') & 3;
+
+    if (leafStyle === 1) {
+      for(var i = 0; i < this.leafNodes.length; i++) {
+        leaf = this._canvas.circle(this.leafNodes[i].x, this.leafNodes[i].y, leafSize);
+        leaf.attr('fill', this.leafColor1);
+      }
+    }
   }
 
   draw () {
@@ -82,16 +111,18 @@ class Plant {
       });
     }
     this.drawStem();
+    // this.drawLeaves();
   }
 }
 
 var MAX_DEPTH = 4;
 
 var PLANT_GENES = {
-  petals: {
-    length: 8,
-    width: 8,
-    shape: 8
+  leaf: {
+    style: 8,
+    size: 8,
+    colors: [2, 24],
+    alphas: [2, 9]
   },
   stem: {
     thickness: 8,

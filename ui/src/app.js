@@ -7,8 +7,6 @@ var CONSTS = {
 var plants = [];
 var parents = [];
 var selectedParent = 0;
-var downNumber = -1;
-var isDown = [false, false, false, false, false];
 var xoverChance = 0.1;
 
 function init () {
@@ -16,7 +14,21 @@ function init () {
   var parentContainer = document.getElementById('parent-canvas');
   createPlantSet(parentContainer, 5, 'parent-', parents);
   createPlantSet(canvasContainer, CONSTS.NUM_PLANTS, 'plant-', plants);
+  $('#edit-pane').hide();
 }
+
+$('#edit').click(function () {
+  $('#main-canvas').toggle();
+  $('#edit-pane').toggle();
+  var stringData = JSON.stringify(JSON.parse(window.localStorage.getItem('plants')), null, 2);
+  $('#edit-data').val(stringData);
+});
+
+
+$('#save-edit').click(function () {
+  var storeString = $('#edit-data').val();
+  window.localStorage.setItem('plants', storeString);
+});
 
 function createPlantSet (containerEl, numPlants, elementIdPrefix, holdingArray) {
   var plantCanvas;
@@ -41,19 +53,6 @@ function createPlantSet (containerEl, numPlants, elementIdPrefix, holdingArray) 
 
     holdingArray[i] = new Plant(svgEl);
   }
-
-}
-
-function plantDrag(ev) {
-  console.log(arguments);
-  ev.dataTransfer.dropEffect ='move';
-  ev.dataTransfer.setData("text/plain", ev.target.id);
-}
-
-function plantDragOver(ev) {
-  ev.preventDefault();
-  var draggingId = ev.dataTransfer.getData("text");
-  var dropId = ev.target.id;
 }
 
 function getPlantById (id) {
@@ -69,6 +68,22 @@ function getPlantById (id) {
   return srcArray[id];
 }
 
+function plantDrag(ev) {
+  console.log(arguments);
+  ev.dataTransfer.dropEffect ='move';
+  ev.dataTransfer.setData("text/plain", ev.target.id);
+}
+
+function plantDragOver(ev) {
+  ev.preventDefault();
+  var draggingId = ev.dataTransfer.getData("text");
+  var dropId = ev.target.id;
+}
+
+window.plantDrag = plantDrag;
+window.plantDragOver = plantDragOver;
+window.plantDrop = plantDrop;
+
 function plantDrop(ev) {
   ev.preventDefault();
   var draggingId = ev.dataTransfer.getData("text");
@@ -81,12 +96,12 @@ function plantDrop(ev) {
   }
 }
 
-function breed(firstId, secondId) {
+function breed(firstId, secondId, mutation=0.01) {
   var plant1Genes = getPlantById(firstId).genes.clone();
   var plant2Genes = getPlantById(secondId).genes.clone();
 
   for (var i=0; i<CONSTS.NUM_PLANTS; i++) {
-    plants[i].genes = plant1Genes.breed(plant2Genes, xoverChance, 0.01);
+    plants[i].genes = plant1Genes.breed(plant2Genes, xoverChance, mutation);
     // clear out the svg so can redraw
     drawPlant(i);
   }
@@ -96,12 +111,14 @@ function swap(firstId, secondId) {
   var plant1 = getPlantById(firstId);
   var plant2 = getPlantById(secondId);
   plant1.swap(plant2);
-  draw();
+  // todo only draw changed
+  $("#" + firstId + ' svg *').remove();
+  $("#" + secondId + ' svg *').remove();
+  plant1.draw();
+  plant2.draw();
+
 }
 
-window.plantDrag = plantDrag;
-window.plantDragOver = plantDragOver;
-window.plantDrop = plantDrop;
 
 function draw () {
   $('svg *').remove();
@@ -113,6 +130,10 @@ function draw () {
     parents[i].draw();
   }
 }
+
+
+
+
 
 function drawPlant (i) {
   $('#plant-' + i + ' svg *').remove();
@@ -142,35 +163,58 @@ $(document).ready(() => {
   });
 
   $('#breed').click(function(event) {
-    breed('parent-1', 'parent-2');
+    breed('parent-0', 'parent-1');
   });
 
-  $(document).keydown(function (ev) {
-    var digit = ev.which - 48;
-    // track which of the 1 -5 keys is down
-    if (digit > 0 && digit < 6) {
-      isDown[digit -1] = true;
-      // selectParent(digit-1);
+  $('#breedHighMutation').click(function(event) {
+    breed('parent-0', 'parent-1', 0.1);
+  });
+
+
+
+  $('#save').click(function(event) {
+    var storeObj = {};
+    for(var i = 0; i < parents.length; i++) {
+      storeObj['parent' + i] = parents[i].genes.toJSON();
     }
+    var storeString = JSON.stringify(storeObj);
+    window.localStorage.setItem('plants', storeString);
 
   });
+
+  $('#load').click(function(event) {
+    var stringData = window.localStorage.getItem('plants');
+    var data = JSON.parse(stringData);
+
+    for(var i = 0; i < parents.length; i++) {
+      parents[i].genes.fromJSON(data['parent' + i]);
+    }
+    draw();
+  });
+
+
+
 
   $(document).keyup(function (ev) {
     var digit = ev.which - 48;
     // track which of the 1 -5 keys is down
-    if (digit > 0 && digit < 6) {
-      isDown[digit -1] = false;
-      // selectParent(-1);
-    } else {
-      var char = String.fromCharCode(ev.which);
-      console.log(char);
-      if(char === 'B') {
-        breed();
-      }
-      if(char === 'R') {
-        randomize();
-      }
+    var char = String.fromCharCode(ev.which);
+    console.log(char);
+    if(char === 'B') {
+      breed('parent-0', 'parent-1', 0.01);
     }
+    if(char === 'N') {
+      breed('parent-0', 'parent-1', 0.1);
+    }
+    if(char === 'M') {
+      breed('parent-0', 'parent-1', 0.2);
+    }
+
+
+    if(char === 'R') {
+      randomize();
+    }
+
   });
 
   // function selectParent (id) {

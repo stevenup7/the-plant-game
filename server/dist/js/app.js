@@ -20280,14 +20280,12 @@ exports.createContext = Script.createContext = function (context) {
 var Plant = require('./plant');
 
 var CONSTS = {
-  NUM_PLANTS: 40
+  NUM_PLANTS: 25
 };
 
 var plants = [];
 var parents = [];
 var selectedParent = 0;
-var downNumber = -1;
-var isDown = [false, false, false, false, false];
 var xoverChance = 0.1;
 
 function init() {
@@ -20295,7 +20293,20 @@ function init() {
   var parentContainer = document.getElementById('parent-canvas');
   createPlantSet(parentContainer, 5, 'parent-', parents);
   createPlantSet(canvasContainer, CONSTS.NUM_PLANTS, 'plant-', plants);
+  $('#edit-pane').hide();
 }
+
+$('#edit').click(function () {
+  $('#main-canvas').toggle();
+  $('#edit-pane').toggle();
+  var stringData = JSON.stringify(JSON.parse(window.localStorage.getItem('plants')), null, 2);
+  $('#edit-data').val(stringData);
+});
+
+$('#save-edit').click(function () {
+  var storeString = $('#edit-data').val();
+  window.localStorage.setItem('plants', storeString);
+});
 
 function createPlantSet(containerEl, numPlants, elementIdPrefix, holdingArray) {
   var plantCanvas;
@@ -20322,18 +20333,6 @@ function createPlantSet(containerEl, numPlants, elementIdPrefix, holdingArray) {
   }
 }
 
-function plantDrag(ev) {
-  console.log(arguments);
-  ev.dataTransfer.dropEffect = 'move';
-  ev.dataTransfer.setData("text/plain", ev.target.id);
-}
-
-function plantDragOver(ev) {
-  ev.preventDefault();
-  var draggingId = ev.dataTransfer.getData("text");
-  var dropId = ev.target.id;
-}
-
 function getPlantById(id) {
   var stripString = 'plant-';
   var srcArray = plants;
@@ -20346,6 +20345,22 @@ function getPlantById(id) {
   // look it up in the right src array
   return srcArray[id];
 }
+
+function plantDrag(ev) {
+  console.log(arguments);
+  ev.dataTransfer.dropEffect = 'move';
+  ev.dataTransfer.setData("text/plain", ev.target.id);
+}
+
+function plantDragOver(ev) {
+  ev.preventDefault();
+  var draggingId = ev.dataTransfer.getData("text");
+  var dropId = ev.target.id;
+}
+
+window.plantDrag = plantDrag;
+window.plantDragOver = plantDragOver;
+window.plantDrop = plantDrop;
 
 function plantDrop(ev) {
   ev.preventDefault();
@@ -20360,11 +20375,13 @@ function plantDrop(ev) {
 }
 
 function breed(firstId, secondId) {
+  var mutation = arguments.length <= 2 || arguments[2] === undefined ? 0.01 : arguments[2];
+
   var plant1Genes = getPlantById(firstId).genes.clone();
   var plant2Genes = getPlantById(secondId).genes.clone();
 
   for (var i = 0; i < CONSTS.NUM_PLANTS; i++) {
-    plants[i].genes = plant1Genes.breed(plant2Genes, xoverChance, 0.01);
+    plants[i].genes = plant1Genes.breed(plant2Genes, xoverChance, mutation);
     // clear out the svg so can redraw
     drawPlant(i);
   }
@@ -20374,12 +20391,13 @@ function swap(firstId, secondId) {
   var plant1 = getPlantById(firstId);
   var plant2 = getPlantById(secondId);
   plant1.swap(plant2);
-  draw();
-}
+  // todo only draw changed
+  $("#" + firstId + ' svg *').remove();
+  $("#" + secondId + ' svg *').remove();
 
-window.plantDrag = plantDrag;
-window.plantDragOver = plantDragOver;
-window.plantDrop = plantDrop;
+  plant1.draw();
+  plant2.draw();
+}
 
 function draw() {
   $('svg *').remove();
@@ -20420,34 +20438,50 @@ $(document).ready(function () {
   });
 
   $('#breed').click(function (event) {
-    breed('parent-1', 'parent-2');
+    breed('parent-0', 'parent-1');
   });
 
-  $(document).keydown(function (ev) {
-    var digit = ev.which - 48;
-    // track which of the 1 -5 keys is down
-    if (digit > 0 && digit < 6) {
-      isDown[digit - 1] = true;
-      // selectParent(digit-1);
+  $('#breedHighMutation').click(function (event) {
+    breed('parent-0', 'parent-1', 0.1);
+  });
+
+  $('#save').click(function (event) {
+    var storeObj = {};
+    for (var i = 0; i < parents.length; i++) {
+      storeObj['parent' + i] = parents[i].genes.toJSON();
     }
+    var storeString = JSON.stringify(storeObj);
+    window.localStorage.setItem('plants', storeString);
+  });
+
+  $('#load').click(function (event) {
+    var stringData = window.localStorage.getItem('plants');
+    var data = JSON.parse(stringData);
+
+    for (var i = 0; i < parents.length; i++) {
+      parents[i].genes.fromJSON(data['parent' + i]);
+    }
+    draw();
   });
 
   $(document).keyup(function (ev) {
     var digit = ev.which - 48;
     // track which of the 1 -5 keys is down
-    if (digit > 0 && digit < 6) {
-      isDown[digit - 1] = false;
-      // selectParent(-1);
-    } else {
-        var char = String.fromCharCode(ev.which);
-        console.log(char);
-        if (char === 'B') {
-          breed();
-        }
-        if (char === 'R') {
-          randomize();
-        }
-      }
+    var char = String.fromCharCode(ev.which);
+    console.log(char);
+    if (char === 'B') {
+      breed('parent-0', 'parent-1', 0.01);
+    }
+    if (char === 'N') {
+      breed('parent-0', 'parent-1', 0.1);
+    }
+    if (char === 'M') {
+      breed('parent-0', 'parent-1', 0.2);
+    }
+
+    if (char === 'R') {
+      randomize();
+    }
   });
 
   // function selectParent (id) {
@@ -20490,28 +20524,65 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var randomInt = require('./util').randomInt;
 
 var Gene = function () {
-  function Gene(name, def) {
+  function Gene(name, definition) {
     _classCallCheck(this, Gene);
 
     this._name = name;
-    this._defn = def;
+    this._definition = definition;
     this._values = {};
   }
 
   _createClass(Gene, [{
+    key: 'randomRGBA',
+    value: function randomRGBA() {
+      return {
+        r: randomInt(0, 255),
+        g: randomInt(0, 255),
+        b: randomInt(0, 255),
+        a: randomInt(0, 100) / 100
+      };
+    }
+  }, {
+    key: 'randomizeGene',
+    value: function randomizeGene(definition, genename) {
+      var type = definition[0];
+      var min;
+      var max;
+      var i;
+      switch (type) {
+        case 'int':
+          min = definition[1];
+          max = definition[2];
+          this._values[genename] = randomInt(min, max);
+          break;
+        case 'intArray':
+          min = definition[2];
+          max = definition[3];
+          this._values[genename] = [];
+          for (i = 0; i < definition[1]; i++) {
+            this._values[genename][i] = randomInt(min, max);
+          }
+          break;
+        case 'color':
+          this._values[genename] = this.randomRGBA();
+          break;
+        case 'colorArray':
+          this._values[genename] = [];
+          for (i = 0; i < definition[1]; i++) {
+            this._values[genename][i] = this.randomRGBA();
+          }
+          break;
+        case 'default':
+          throw 'unknown type [' + type + ']';
+      }
+    }
+  }, {
     key: 'randomize',
     value: function randomize() {
       var _this = this;
 
-      _.each(this._defn, function (definitionValue, subUnitName) {
-        if (_.isArray(definitionValue)) {
-          _this._values[subUnitName] = [];
-          for (var i = 0; i < definitionValue[0]; i++) {
-            _this._values[subUnitName].push(randomInt(0, Math.pow(2, definitionValue[1])));
-          }
-        } else {
-          _this._values[subUnitName] = randomInt(0, Math.pow(2, definitionValue));
-        }
+      _.each(this._definition, function (definition, genename) {
+        _this.randomizeGene(definition, genename);
       });
     }
   }, {
@@ -20520,25 +20591,87 @@ var Gene = function () {
       return JSON.parse(JSON.stringify(this._values));
     }
   }, {
+    key: 'mutateInt',
+    value: function mutateInt(currVal, min, max) {
+      var newVal = randomInt(min, max);
+      return Math.round((currVal + newVal) / 2);
+    }
+  }, {
+    key: 'mutateColor',
+    value: function mutateColor(currVal) {
+      return this.randomRGBA();
+    }
+  }, {
+    key: 'switchArrayEls',
+    value: function switchArrayEls(valuesArray) {
+      var pos1 = randomInt(0, valuesArray.length - 1);
+      var pos2 = randomInt(0, valuesArray.length - 1);
+      var temp = valuesArray[pos1];
+      valuesArray[pos1] = valuesArray[pos2];
+      valuesArray[pos2] = temp;
+    }
+  }, {
+    key: 'mutateGene',
+    value: function mutateGene(genename, mutationChance) {
+      var definition = this._definition[genename];
+      var type = definition[0];
+      var min;
+      var max;
+      var i;
+
+      switch (type) {
+        case 'int':
+          min = definition[1];
+          max = definition[2];
+          if (Math.random() < mutationChance) {
+            console.log("mutating");
+            this._values[genename] = this.mutateInt(this._values[genename], min, max);
+          }
+          break;
+        case 'intArray':
+          min = definition[2];
+          max = definition[3];
+          if (Math.random > 0.5) {
+            for (i = 0; i < definition[1]; i++) {
+              if (Math.random() < mutationChance) {
+                this._values[genename][i] = this.mutateInt(this._values[genename][i], min, max);
+              }
+            }
+          } else {
+            if (Math.random() < mutationChance) {
+              this.switchArrayEls(this._values[genename]);
+            }
+          }
+          break;
+        case 'color':
+          if (Math.random() < mutationChance) {
+            this._values[genename] = this.mutateColor(this._values[genename]);
+          }
+          break;
+        case 'colorArray':
+          if (Math.random > 0.5) {
+            for (i = 0; i < definition[1]; i++) {
+              if (Math.random() < mutationChance) {
+                this._values[genename][i] = this.mutateColor(this._values[genename][i]);
+              }
+            }
+          } else {
+            if (Math.random() < mutationChance) {
+              this.switchArrayEls(this._values[genename]);
+            }
+          }
+          break;
+        case 'default':
+          throw 'unknown type [' + type + ']';
+      }
+    }
+  }, {
     key: 'mutate',
     value: function mutate(mutationChance) {
       var _this2 = this;
 
-      _.each(this._defn, function (definitionValue, subUnitName) {
-        if (_.isArray(definitionValue)) {
-          for (var i = 0; i < definitionValue[0]; i++) {
-            if (Math.random() < mutationChance) {
-              console.log('mutation');
-              _this2._values[subUnitName][i] = randomInt(0, Math.pow(2, definitionValue[1]));
-            }
-          }
-        } else {
-          if (Math.random() < mutationChance) {
-            // randomize the value
-            console.log('mutation');
-            _this2._values[subUnitName] = randomInt(0, Math.pow(2, definitionValue));
-          }
-        }
+      _.each(this._definition, function (definitionValue, genename) {
+        _this2.mutateGene(genename, mutationChance);
       });
     }
   }, {
@@ -20546,26 +20679,25 @@ var Gene = function () {
     value: function doBreed(otherGene, childGene, thisIsSource, xoverChance, mutationChance) {
       var _this3 = this;
 
-      _.each(this._defn, function (value, attr) {
-        if (_.isArray(_this3._values[attr])) {
-          var arrayLen = value[0];
-          childGene._values[attr] = [];
-          for (var i = 0; i < arrayLen; i++) {
+      _.each(this._definition, function (definition, genename) {
+        if (_.isArray(_this3._values[genename])) {
+          var len = _this3._values[genename].length;
+          childGene._values[genename] = [];
+          for (var i = 0; i < len; i++) {
             if (thisIsSource) {
-              childGene._values[attr].push(_this3._values[attr][i]);
+              childGene._values[genename].push(_this3._values[genename][i]);
             } else {
-              childGene._values[attr].push(otherGene._values[attr][i]);
+              childGene._values[genename].push(otherGene._values[genename][i]);
             }
-
             if (Math.random() < xoverChance) {
               thisIsSource = !thisIsSource;
             }
           }
         } else {
           if (thisIsSource) {
-            childGene._values[attr] = _this3._values[attr];
+            childGene._values[genename] = _this3._values[genename];
           } else {
-            childGene._values[attr] = otherGene._values[attr];
+            childGene._values[genename] = otherGene._values[genename];
           }
 
           if (Math.random() < xoverChance) {
@@ -20577,14 +20709,14 @@ var Gene = function () {
     }
   }, {
     key: 'get',
-    value: function get(attr) {
-      return this._values[attr];
+    value: function get(genename) {
+      return this._values[genename];
     }
   }, {
     key: 'clone',
     value: function clone() {
       // make a new clone
-      var theClone = new Gene(this._name, this._defn);
+      var theClone = new Gene(this._name, this._definition);
       // clone values into new object
       theClone._values = _.clone(this._values);
       return theClone;
@@ -20616,9 +20748,10 @@ var GeneSet = function () {
       var _this4 = this;
 
       this._geneDefinition = geneDefinition;
+
       if (initGenes) {
-        _.each(geneDefinition, function (attr, key) {
-          _this4._genes[key] = new Gene(key, attr);
+        _.each(geneDefinition, function (geneDefinition, geneName) {
+          _this4._genes[geneName] = new Gene(geneName, geneDefinition);
         });
       }
     }
@@ -20740,9 +20873,9 @@ var Point = function () {
   }, {
     key: 'pointAtAngle',
     value: function pointAtAngle(angleRadians, distance) {
-      var x = distance * M.round(M.cos(angleRadians + 1.5 * M.PI) * 1000) / 1000;
-      var y = distance * M.round(M.sin(angleRadians + 1.5 * M.PI) * 1000) / 1000;
-      return new Point(this.x + x, this.y + y);
+      var dx = distance * M.round(M.cos(angleRadians + 1.5 * M.PI) * 1000) / 1000;
+      var dy = distance * M.round(M.sin(angleRadians + 1.5 * M.PI) * 1000) / 1000;
+      return new Point(this.x + dx, this.y + dy);
     }
   }]);
 
@@ -20785,7 +20918,7 @@ var Line = function () {
     key: 'pointAtAngle',
     value: function pointAtAngle(angleRadians, distance) {
       var ang = this.angleRad();
-      angleRadians = angleRadians - ang;
+      angleRadians = angleRadians + ang;
       return this.p2.pointAtAngle(angleRadians, distance);
     }
   }, {
@@ -20811,19 +20944,41 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var GeneSet = require('./gene').GeneSet;
+var randomInt = require('./gene').randomInt;
 var Point = require('./math2d').Point;
 var Line = require('./math2d').Line;
 
+var MAX_DEPTH = 4;
+
+var PLANT_GENES = {
+  leaf: {
+    style: ["int", 1, 4],
+    size: ["int", 1, 5],
+    colors: ["colorArray", 2]
+  },
+  stem: {
+    thickness: ["intArray", MAX_DEPTH, 1, 3],
+    angle: ["intArray", MAX_DEPTH, 5, 100],
+    counts: ["intArray", MAX_DEPTH, 1, 6],
+    lengths: ["intArray", MAX_DEPTH, 3, 40],
+    styles: ["intArray", MAX_DEPTH, 0, 2],
+    lengthrandomness: ["intArray", MAX_DEPTH, 0, 1],
+    colors: ["colorArray", MAX_DEPTH],
+    colors2: ["colorArray", MAX_DEPTH],
+    depth: ["int", 1, MAX_DEPTH]
+  }
+};
+
 var Plant = function () {
   function Plant(canvas) {
-    var randomInit = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+    var initializeRandom = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
 
     _classCallCheck(this, Plant);
 
     this._canvas = canvas;
     this.genes = new GeneSet(PLANT_GENES);
 
-    if (randomInit) {
+    if (initializeRandom) {
       this.genes.randomize();
     }
   }
@@ -20839,88 +20994,104 @@ var Plant = function () {
     }
   }, {
     key: 'recurseDrawStems',
-    value: function recurseDrawStems(level, start, thickness) {
-      var branches = [];
+    value: function recurseDrawStems(level, start) {
       var angle = this.genes.get('stem', 'angle')[level];
-      var count;
-      if (level === this.depth) {
-        // more stems on last level
-        count = this.genes.get('stem', 'counts')[level] & 15;
-      } else {
-        count = this.genes.get('stem', 'counts')[level] & 7;
-      }
-      var length = this.genes.get('stem', 'lengths')[level] & 63;
-      var startAngle = (count - 1) * angle / -2;
+      var thickness = this.genes.get('stem', 'thickness')[level];
+      var color = this.genes.get('stem', 'colors')[level];
+      var color2 = this.genes.get('stem', 'colors')[level];
+      var count = this.genes.get('stem', 'counts')[level];
+      var length = this.genes.get('stem', 'lengths')[level];
+      var style = this.genes.get('stem', 'styles')[level];
 
+      var startAngle = (count - 1) * angle / -2;
+      var branch;
+
+      // var headingline = new Line(start.p2, start.pointAtAngleDeg(0, 500));
+      // this.drawDebugLine(headingline);
       for (var x = 0; x < count; x++) {
-        branches[x] = new Line(start.p2, start.pointAtAngleDeg(startAngle, length));
+        switch (style) {
+          case 0:
+            length = randomInt(length / 2, length);
+          case 1:
+            branch = new Line(start.p2, start.pointAtAngleDeg(startAngle, length));
+            break;
+          case 2:
+            branch = new Line(start.p2, start.p2.pointAtAngleDeg(startAngle, length));
+            break;
+          default:
+            throw 'bad style';
+        }
+
+        this.branches.push(branch);
         startAngle = startAngle + angle;
-        this.drawLine(branches[x], thickness, level);
-        if (level < this.depth) {
-          this.recurseDrawStems(level + 1, branches[x], thickness);
+
+        this.drawLine(branch, thickness, color);
+
+        if (level + 1 < this.maxDepth) {
+          this.recurseDrawStems(level + 1, branch);
+        } else {
+          this.leafNodes.push(branch.p2);
         }
       }
     }
   }, {
-    key: 'drawLine',
-    value: function drawLine(l, thickness, level) {
+    key: 'colorToRgbaString',
+    value: function colorToRgbaString(color) {
+      return 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',' + color.a + ')';
+    }
+  }, {
+    key: 'drawDebugLine',
+    value: function drawDebugLine(l) {
       var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
-      line.attr('strokeWidth', thickness + 1);
-      line.attr('stroke', 'rgba(' + this.stemColors[level].r + ',' + this.stemColors[level].g + ',' + this.stemColors[level].b + ',' + this.stemColors[level].a / 100 + ')');
+      line.attr('strokeWidth', 1);
+      line.attr('strokeDasharray', '4, 10');
+      line.attr('stroke', 'rgba(255,0,0,0.5)');
+    }
+  }, {
+    key: 'drawLine',
+    value: function drawLine(l, thickness, color) {
+      var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
+      line.attr('strokeWidth', thickness);
+      line.attr('stroke', this.colorToRgbaString(color));
     }
   }, {
     key: 'drawStem',
     value: function drawStem() {
-      this.root = new Line(new Point(this._width / 2, this._height), new Point(this._width / 2, this._height - 1));
-
-      var thickness = this.genes.get('stem', 'thickness') & 3;
-
-      // how deep to recurse
-      this.depth = this.genes.get('stem', 'depth') % 4;
-      this.drawLine(this.root, thickness, 1);
-
-      this.recurseDrawStems(1, this.root, thickness);
+      this.root = new Line(new Point(this._width / 2, this._height), new Point(this._width / 2, this._height / 2));
+      this.maxDepth = this.genes.get('stem', 'depth');
+      console.log('maxDepth', this.maxDepth);
+      this.recurseDrawStems(0, this.root);
+    }
+  }, {
+    key: 'drawLeaf',
+    value: function drawLeaf(point) {
+      var leafSize = this.genes.get('leaf', 'size');
+      var leaf = this._canvas.circle(point.x, point.y, leafSize);
+      leaf.attr('fill', this.colorToRgbaString(this.genes.get('leaf', 'colors')[0]));
+    }
+  }, {
+    key: 'drawLeaves',
+    value: function drawLeaves() {
+      for (var i = 0; i < this.leafNodes.length; i++) {
+        this.drawLeaf(this.leafNodes[i]);
+      }
     }
   }, {
     key: 'draw',
     value: function draw() {
+      // reset leaf nodes
+      this.leafNodes = [];
       // return false;
       this._width = this._canvas.node.clientWidth;
       this._height = this._canvas.node.clientHeight;
-      this.stemColors = [];
-      for (var i = 0; i < MAX_DEPTH; i++) {
-        this.stemColors.push({
-          r: this.genes.get('stem', 'colors')[i * 3] & 255,
-          g: this.genes.get('stem', 'colors')[i * 3 + 1] & 255,
-          b: this.genes.get('stem', 'colors')[i * 3 + 2] & 255,
-          a: this.genes.get('stem', 'alphas')[i] % 100
-        });
-      }
+      this.branches = [];
       this.drawStem();
+      this.drawLeaves();
     }
   }]);
 
   return Plant;
 }();
-
-var MAX_DEPTH = 4;
-
-var PLANT_GENES = {
-  petals: {
-    length: 8,
-    width: 8,
-    shape: 8
-  },
-  stem: {
-    thickness: 8,
-    angle: [MAX_DEPTH, 8],
-    counts: [MAX_DEPTH, 8],
-    lengths: [MAX_DEPTH, 8],
-    colors: [MAX_DEPTH * 3, 24],
-    alphas: [MAX_DEPTH, 9],
-    depth: 8
-  }
-};
 
 module.exports = Plant;
 

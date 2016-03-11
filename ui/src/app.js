@@ -1,7 +1,7 @@
 var Plant = require('./plant');
 
 var CONSTS = {
-  NUM_PLANTS: 40
+  NUM_PLANTS: 25
 };
 
 var plants = [];
@@ -114,6 +114,7 @@ function swap(firstId, secondId) {
   // todo only draw changed
   $("#" + firstId + ' svg *').remove();
   $("#" + secondId + ' svg *').remove();
+
   plant1.draw();
   plant2.draw();
 

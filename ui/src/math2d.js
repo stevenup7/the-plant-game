@@ -28,9 +28,9 @@ class Point {
   }
 
   pointAtAngle (angleRadians, distance) {
-    var x = distance * M.round(M.cos(angleRadians + 1.5 * M.PI) * 1000) / 1000;
-    var y = distance * M.round(M.sin(angleRadians + 1.5 * M.PI) * 1000) / 1000;
-    return new Point(this.x + x, this.y + y);
+    var dx = distance * M.round(M.cos(angleRadians + 1.5 * M.PI) * 1000) / 1000;
+    var dy = distance * M.round(M.sin(angleRadians + 1.5 * M.PI) * 1000) / 1000;
+    return new Point(this.x + dx, this.y + dy);
   }
 
 }
@@ -61,7 +61,7 @@ class Line {
 
   pointAtAngle (angleRadians, distance) {
     var ang = this.angleRad();
-    angleRadians = angleRadians - ang;
+    angleRadians = angleRadians + ang;
     return this.p2.pointAtAngle(angleRadians, distance);
   }
 

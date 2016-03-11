@@ -1,15 +1,37 @@
 var GeneSet = require('./gene').GeneSet;
+var randomInt = require('./gene').randomInt;
 var Point = require('./math2d').Point;
 var Line = require('./math2d').Line;
 
+var MAX_DEPTH = 4;
+
+var PLANT_GENES = {
+  leaf: {
+    style: ["int", 1, 4],
+    size: ["int", 1, 5],
+    colors: ["colorArray", 2]
+  },
+  stem: {
+    thickness: ["intArray", MAX_DEPTH, 1, 3],
+    angle: ["intArray", MAX_DEPTH, 5, 100],
+    counts: ["intArray", MAX_DEPTH, 1, 6],
+    lengths: ["intArray", MAX_DEPTH, 3, 40],
+    styles: ["intArray", MAX_DEPTH, 0, 2],
+    lengthrandomness: ["intArray", MAX_DEPTH, 0, 1],
+    colors: ["colorArray", MAX_DEPTH],
+    colors2: ["colorArray", MAX_DEPTH],
+    depth: ["int", 1, MAX_DEPTH]
+  }
+};
+
+
 class Plant {
 
-  constructor (canvas, randomInit = true) {
+  constructor (canvas, initializeRandom = true) {
     this._canvas = canvas;
     this.genes = new GeneSet(PLANT_GENES);
-    this.leafNodes = [];
 
-    if (randomInit) {
+    if (initializeRandom) {
       this.genes.randomize();
     }
   }
@@ -22,117 +44,100 @@ class Plant {
     this.genes = temp.genes;
   }
 
-  recurseDrawStems (level, start, thickness) {
-    var branches = [];
+  recurseDrawStems (level, start) {
     var angle = this.genes.get('stem', 'angle')[level];
-    var count;
-    if(level === this.depth) {
-      // more stems on last level
-      count = this.genes.get('stem', 'counts')[level] % 7;
-    } else {
-      count = this.genes.get('stem', 'counts')[level] % 6;
-    }
-    count ++;
-    var length = this.genes.get('stem', 'lengths')[level] & 63;
-    var startAngle =((count-1)* angle)/-2;
+    var thickness = this.genes.get('stem', 'thickness')[level];
+    var color = this.genes.get('stem', 'colors')[level];
+    var color2 = this.genes.get('stem', 'colors')[level];
+    var count = this.genes.get('stem', 'counts')[level];
+    var length = this.genes.get('stem', 'lengths')[level];
+    var style  = this.genes.get('stem', 'styles')[level];
 
+    var startAngle = ((count-1) * angle)/-2;
+    var branch;
+
+
+    // var headingline = new Line(start.p2, start.pointAtAngleDeg(0, 500));
+    // this.drawDebugLine(headingline);
     for(var x=0; x< count; x++) {
-      branches[x] = new Line(start.p2, start.pointAtAngleDeg(startAngle, length));
+      switch (style) {
+      case 0:
+        length = randomInt(length/2, length);
+      case 1:
+        branch = new Line(start.p2, start.pointAtAngleDeg(startAngle, length));
+        break;
+      case 2:
+        branch = new Line(start.p2, start.p2.pointAtAngleDeg(startAngle, length));
+        break;
+      default:
+        throw('bad style');
+      }
+
+      this.branches.push(branch);
       startAngle = startAngle + angle;
-      this.drawLine(branches[x], thickness, level);
-      if (level < this.depth) {
-        this.recurseDrawStems(level +1, branches[x], thickness );
+
+      this.drawLine(branch, thickness, color);
+
+      if (level + 1 < this.maxDepth) {
+        this.recurseDrawStems(level +1, branch);
       } else {
-        this.leafNodes.push(branches[x].p2);
+        this.leafNodes.push(branch.p2);
       }
     }
   }
 
-  drawLine (l, thickness, level) {
+  colorToRgbaString (color) {
+    return 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',' + color.a + ')';
+  }
+
+  drawDebugLine (l) {
     var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
-    line.attr('strokeWidth', thickness + 1);
-    line.attr('stroke', 'rgba(' +
-              this.stemColors[level].r + ',' +
-              this.stemColors[level].g + ',' +
-              this.stemColors[level].b + ',' +
-              this.stemColors[level].a/100 + ')'
-             );
+    line.attr('strokeWidth', 1);
+    line.attr('strokeDasharray', '4, 10');
+    line.attr('stroke', 'rgba(255,0,0,0.5)');
+  }
+
+
+  drawLine (l, thickness, color) {
+    var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
+    line.attr('strokeWidth', thickness);
+    line.attr('stroke', this.colorToRgbaString(color));
   }
 
   drawStem () {
     this.root = new Line(new Point(this._width/2, this._height),
-                         new Point(this._width/2, this._height -1));
+                         new Point(this._width/2, this._height/2));
+    this.maxDepth = this.genes.get('stem', 'depth');
+    console.log('maxDepth', this.maxDepth);
+    this.recurseDrawStems(0, this.root);
+  }
 
-    var thickness = this.genes.get('stem', 'thickness') & 3;
-
-    // how deep to recurse
-    this.depth = this.genes.get('stem', 'depth') % 4 + 1;
-    this.drawLine(this.root, thickness, 1);
-
-    this.recurseDrawStems(1, this.root, thickness);
+  drawLeaf (point) {
+    var leafSize = this.genes.get('leaf', 'size');
+    var leaf = this._canvas.circle(point.x, point.y, leafSize);
+    leaf.attr('fill', this.colorToRgbaString(
+      this.genes.get('leaf', 'colors')[0]
+    ));
   }
 
   drawLeaves () {
-    this.leafColor1 = 'rgba(' +
-      (this.genes.get('leaf', 'colors')[0] & 255) + ', ' +
-      (this.genes.get('leaf', 'colors')[1] & 255)  + ', ' +
-      (this.genes.get('leaf', 'colors')[2] & 255)  + ', ' +
-      (this.genes.get('leaf', 'alphas')[0] % 100 / 100) + ')';
-
-    this.leafColor2 = 'rgba(' +
-      (this.genes.get('leaf', 'colors')[3] & 255) + ', ' +
-      (this.genes.get('leaf', 'colors')[4] & 255)  + ', ' +
-      (this.genes.get('leaf', 'colors')[5] & 255)  + ', ' +
-      (this.genes.get('leaf', 'alphas')[1] % 100 / 100) + ')';
-
-    var leaf;
-    var leafSize = this.genes.get('leaf', 'size') & 15;
-    var leafStyle = this.genes.get('leaf', 'style') & 3;
-
-    if (leafStyle === 1) {
-      for(var i = 0; i < this.leafNodes.length; i++) {
-        leaf = this._canvas.circle(this.leafNodes[i].x, this.leafNodes[i].y, leafSize);
-        leaf.attr('fill', this.leafColor1);
-      }
+    for(var i = 0; i < this.leafNodes.length; i++) {
+      this.drawLeaf(this.leafNodes[i]);
     }
   }
 
   draw () {
+    // reset leaf nodes
+    this.leafNodes = [];
     // return false;
     this._width = this._canvas.node.clientWidth;
     this._height = this._canvas.node.clientHeight;
-    this.stemColors = [];
-    for(var i = 0; i < MAX_DEPTH; i++) {
-      this.stemColors.push({
-        r: this.genes.get('stem', 'colors')[i*3   ] & 255,
-        g: this.genes.get('stem', 'colors')[i*3 +1] & 255,
-        b: this.genes.get('stem', 'colors')[i*3 +2] & 255,
-        a: this.genes.get('stem', 'alphas')[i] % 100
-      });
-    }
+    this.branches = [];
     this.drawStem();
-    // this.drawLeaves();
+    this.drawLeaves();
+
   }
 }
 
-var MAX_DEPTH = 4;
-
-var PLANT_GENES = {
-  leaf: {
-    style: 8,
-    size: 8,
-    colors: [2, 24],
-    alphas: [2, 9]
-  },
-  stem: {
-    thickness: 8,
-    angle: [MAX_DEPTH, 8],
-    counts: [MAX_DEPTH, 8],
-    lengths: [MAX_DEPTH, 8],
-    colors: [MAX_DEPTH * 3, 24],
-    alphas: [MAX_DEPTH, 9],
-    depth: 8
-  }
-};
 
 module.exports = Plant;

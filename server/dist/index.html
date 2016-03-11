@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <Meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="A layout example with a side menu that hides on mobile, just like the Pure website.">
+    <meta name="description" content="A generative code 'plant' drawing thing.">
     <title>Plants</title>
     <link rel="stylesheet" href="css/pure-min.css">
     <link rel="stylesheet" href="css/layouts/side-menu.css">
@@ -22,11 +22,29 @@
           <a class="pure-menu-heading" href="#">Plants</a>
 
           <ul class="pure-menu-list">
+
+
             <li class="pure-menu-item">
               <a href="#" class="pure-menu-link" id="randomize">Randomize</a>
             </li>
-            <li class="pure-menu-item" class="menu-item-divided pure-menu-selected">
+            <li class="pure-menu-item">
               <a href="#" class="pure-menu-link" id="breed">Breed</a>
+            </li>
+
+            <li class="pure-menu-item">
+              <a href="#" class="pure-menu-link" id="breedHighMutation">
+                Breed +mut</a>
+            </li>
+
+            <li class="pure-menu-item">
+              <a href="#" class="pure-menu-link" id="load">Load (local)</a>
+            </li>
+            <li class="pure-menu-item">
+              <a href="#" class="pure-menu-link" id="save">Save (local)</a>
+            </li>
+
+            <li class="pure-menu-item">
+              <a href="#" class="pure-menu-link" id="edit">edit</a>
             </li>
 
             <li class="pure-menu-item"><a href="#" class="pure-menu-link">About</a></li>
@@ -43,12 +61,22 @@
           <h2>Generative Drawing - Some code</h2>
         </div>
 
-        <div class="content">
+        <div class="content" id="game">
           <h2 class="content-subhead">Parents</h2>
           <div id="parent-canvas"></div>
           <h2 class="content-subhead">Children</h2>
           <div id="main-canvas"></div>
         </div>
+      </div>
+      <div class="content" id="edit-pane">
+
+        <form class="pure-form">
+          <fieldset>
+            <legend>A compact inline form</legend>
+            <textarea rows="20" cols="80" style="width: 100%" id="edit-data"></textarea>
+          </fieldset>
+        </form>
+        <button id="save-edit">save</button>
       </div>
     </div>
     <script src="js/zepto.min.js"></script>

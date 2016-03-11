@@ -37,36 +37,51 @@ describe('Math2d', function () {
     var pDeg;
     var p;
 
-
     for(var i = 0; i < expectedResults.length; i++) {
       pDeg = pOrig.pointAtAngleDeg(anglesDeg[i], 1);
       p = pOrig.pointAtAngle(angles[i], 1);
 
       expect(pDeg.x).toBe(expectedResults[i][0]);
       expect(pDeg.y).toBe(expectedResults[i][1]);
-
       expect(p.x).toBe(expectedResults[i][0]);
       expect(p.y).toBe(expectedResults[i][1]);
-
     }
-
 
   });
 
- it('to be able to add points at angles from the end of the line' , function () {
-   var l = new Line(new Point(0,0), new Point(0, -1)); // line pointing up
-   var p = l.pointAtAngleDeg(0, 1);
 
-   expect(p.x).toBe(0);
-   expect(p.y).toBe(-2);
+  it('to werk', function () {
+    var point = new Point(1,0);   // --------> (1,0)
+    var pointAtAngle = point.pointAtAngleDeg(90, 1); // ---> (1,0) -- +1 --> (2,0)
+    expect(pointAtAngle.x).toBe(2);
+    expect(pointAtAngle.y).toBe(0);
+  });
 
-   var l = new Line(new Point(0,0), new Point(0, -1)); // line pointing up
-   var p = l.pointAtAngleDeg(90, 1);
+  it('to be able to add points at angles from the end of the line' , function () {
+    var l = new Line(new Point(0,0), new Point(0, -1)); // line pointing up
+    var p = l.pointAtAngleDeg(0, 1);
 
-   expect(p.x).toBe(1);
-   expect(p.y).toBe(-1);
+    expect(p.x).toBe(0);
+    expect(p.y).toBe(-2);
 
+    l = new Line(new Point(0,0), new Point(0, -1)); // line pointing up
+    p = l.pointAtAngleDeg(90, 1);
 
- });
+    expect(p.x).toBe(1);
+    expect(p.y).toBe(-1);
+
+    l = new Line(new Point(0,0), new Point(0, -1)); // line pointing up
+    p = l.pointAtAngleDeg(-90, 1);
+
+    expect(p.x).toBe(-1);
+    expect(p.y).toBe(-1);
+
+    l = new Line(new Point(0,0), new Point(1, 0)); // line pointing right
+    p = l.pointAtAngleDeg(0, 1);
+
+    expect(p.x).toBe(2);
+    expect(p.y).toBe(0);
+
+  });
 
 });

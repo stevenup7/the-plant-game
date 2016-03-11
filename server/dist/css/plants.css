@@ -1,8 +1,11 @@
 .plant-container {
     box-sizing: border-box;
     height: 200px;
-    border: 1px solid #efefef;
     background-color: white;
+}
+
+.plant-container : hover{
+    border: 1px solid #efefef;
 }
 
 .plant-container.selected{

@@ -4,6 +4,8 @@ This project comes from me wanting to see how hard the switch from gulp to npm s
 
 Assumes and app.js in src folder as base for project.
 
+This is the first working version
+
 ## Building the Project
 
 ```bash

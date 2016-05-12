@@ -20280,7 +20280,8 @@ exports.createContext = Script.createContext = function (context) {
 var Plant = require('./plant');
 
 var CONSTS = {
-  NUM_PLANTS: 25
+  NUM_PLANTS: 25,
+  NUM_PARENTS: 15
 };
 
 var plants = [];
@@ -20291,21 +20292,27 @@ var xoverChance = 0.1;
 function init() {
   var canvasContainer = document.getElementById('main-canvas');
   var parentContainer = document.getElementById('parent-canvas');
-  createPlantSet(parentContainer, 5, 'parent-', parents);
+  createPlantSet(parentContainer, CONSTS.NUM_PARENTS, 'parent-', parents);
   createPlantSet(canvasContainer, CONSTS.NUM_PLANTS, 'plant-', plants);
+
   $('#edit-pane').hide();
 }
 
 $('#edit').click(function () {
   $('#main-canvas').toggle();
   $('#edit-pane').toggle();
-  var stringData = JSON.stringify(JSON.parse(window.localStorage.getItem('plants')), null, 2);
+  var stringData = getPlantById('parent-1').genes.toJSON();
+  stringData = JSON.stringify(JSON.parse(stringData, stringData), null, 2);
+  stringData = stringData.replace(/\s*([A-Za-z]*,)[\s]/gi, '$1');
+  stringData = stringData.replace(/(\[)[\s]/gi, '$1');
+  stringData = stringData.replace(/\s*\]\s*,/gi, '],\r');
   $('#edit-data').val(stringData);
 });
 
 $('#save-edit').click(function () {
   var storeString = $('#edit-data').val();
-  window.localStorage.setItem('plants', storeString);
+  getPlantById('parent-1').genes.fromJSON(storeString);
+  drawParent(1);
 });
 
 function createPlantSet(containerEl, numPlants, elementIdPrefix, holdingArray) {
@@ -20347,7 +20354,7 @@ function getPlantById(id) {
 }
 
 function plantDrag(ev) {
-  console.log(arguments);
+  //console.log(arguments);
   ev.dataTransfer.dropEffect = 'move';
   ev.dataTransfer.setData("text/plain", ev.target.id);
 }
@@ -20405,7 +20412,7 @@ function draw() {
   for (var i = 0; i < CONSTS.NUM_PLANTS; i++) {
     plants[i].draw();
   }
-  for (i = 0; i < 5; i++) {
+  for (i = 0; i < CONSTS.NUM_PARENTS; i++) {
     parents[i].draw();
   }
 }
@@ -20514,7 +20521,151 @@ $(document).ready(function () {
   // });
 });
 
-},{"./plant":136}],134:[function(require,module,exports){
+},{"./plant":137}],134:[function(require,module,exports){
+"use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var SColor = function () {
+  function SColor(r, g, b, a) {
+    _classCallCheck(this, SColor);
+
+    this.r = r;
+    this.g = g;
+    this.b = b;
+    this.a = a;
+  }
+
+  _createClass(SColor, [{
+    key: "toHSLa",
+    value: function toHSLa() {
+      return rgbToHsl(this);
+    }
+  }, {
+    key: "scaleToColor",
+    value: function scaleToColor(otherColor, num) {
+      var rslt = [];
+      var c1 = this.toHSLa();
+      var c2 = otherColor.toHSLa();
+
+      var hStep = (c1.h - c2.h) / (num - 1);
+      var sStep = (c1.s - c2.s) / (num - 1);
+      var lStep = (c1.l - c2.l) / (num - 1);
+      var aStep = (c1.a - c2.a) / (num - 1);
+
+      rslt.push(hslToRgb(c1));
+
+      for (var i = 1; i < num - 1; i++) {
+        c1.h -= hStep;
+        c1.s -= sStep;
+        c1.l -= lStep;
+        c1.a -= aStep;
+        rslt.push(hslToRgb(c1));
+      }
+
+      rslt.push(hslToRgb(c2));
+      return rslt;
+    }
+  }]);
+
+  return SColor;
+}();
+
+module.exports = {
+  SColor: SColor
+};
+
+/**
+ * Converts an HSL color value to RGB. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+ * Assumes h, s, and l are contained in the set [0, 1] and
+ * returns r, g, and b in the set [0, 255].
+ *
+ * @param   Number  h       The hue
+ * @param   Number  s       The saturation
+ * @param   Number  l       The lightness
+ * @return  Array           The RGB representation
+ */
+function hslToRgb(hsl) {
+  var r, g, b;
+
+  if (hsl.s === 0) {
+    r = g = b = hsl.l; // achromatic
+  } else {
+      var hue2rgb = function hue2rgb(p, q, t) {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+
+      var q = hsl.l < 0.5 ? hsl.l * (1 + hsl.s) : hsl.l + hsl.s - hsl.l * hsl.s;
+      var p = 2 * hsl.l - q;
+      r = hue2rgb(p, q, hsl.h + 1 / 3);
+      g = hue2rgb(p, q, hsl.h);
+      b = hue2rgb(p, q, hsl.h - 1 / 3);
+    }
+
+  return {
+    r: Math.floor(r * 255),
+    g: Math.floor(g * 255),
+    b: Math.floor(b * 255),
+    a: hsl.a
+  };
+
+  //  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+/**
+ * Converts an RGB color value to HSL. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+ * Assumes r, g, and b are contained in the set [0, 255] and
+ * returns h, s, and l in the set [0, 1].
+ *
+ * @param   Number  r       The red color value
+ * @param   Number  g       The green color value
+ * @param   Number  b       The blue color value
+ * @return  Array           The HSL representation
+ */
+function rgbToHsl(c) {
+  var r = c.r / 255;
+  var g = c.g / 255;
+  var b = c.b / 255;
+  var max = Math.max(r, g, b),
+      min = Math.min(r, g, b);
+  var h,
+      s,
+      l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0; // achromatic
+  } else {
+      var d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r:
+          h = (g - b) / d + (g < b ? 6 : 0);break;
+        case g:
+          h = (b - r) / d + 2;break;
+        case b:
+          h = (r - g) / d + 4;break;
+      }
+      h /= 6;
+    }
+
+  return {
+    h: h,
+    s: s,
+    l: l,
+    a: c.a
+  };
+}
+
+},{}],135:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -20624,7 +20775,6 @@ var Gene = function () {
           min = definition[1];
           max = definition[2];
           if (Math.random() < mutationChance) {
-            console.log("mutating");
             this._values[genename] = this.mutateInt(this._values[genename], min, max);
           }
           break;
@@ -20830,7 +20980,7 @@ module.exports = {
   randomInt: randomInt
 };
 
-},{"./util":137}],135:[function(require,module,exports){
+},{"./util":138}],136:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -20936,7 +21086,7 @@ module.exports = {
   Line: Line
 };
 
-},{}],136:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -20947,14 +21097,17 @@ var GeneSet = require('./gene').GeneSet;
 var randomInt = require('./gene').randomInt;
 var Point = require('./math2d').Point;
 var Line = require('./math2d').Line;
+var SColor = require('./colors').SColor;
 
 var MAX_DEPTH = 4;
 
 var PLANT_GENES = {
   leaf: {
-    style: ["int", 1, 4],
-    size: ["int", 1, 5],
-    colors: ["colorArray", 2]
+    style: ["int", 0, 2],
+    size: ["int", 1, 10],
+    colors: ["colorArray", 4],
+    strokes: ["colorArray", 2],
+    colorstyle: ["int", 0, 3]
   },
   stem: {
     thickness: ["intArray", MAX_DEPTH, 1, 3],
@@ -20962,6 +21115,7 @@ var PLANT_GENES = {
     counts: ["intArray", MAX_DEPTH, 1, 6],
     lengths: ["intArray", MAX_DEPTH, 3, 40],
     styles: ["intArray", MAX_DEPTH, 0, 2],
+    colorstyles: ["intArray", MAX_DEPTH, 0, 1],
     lengthrandomness: ["intArray", MAX_DEPTH, 0, 1],
     colors: ["colorArray", MAX_DEPTH],
     colors2: ["colorArray", MAX_DEPTH],
@@ -20977,13 +21131,24 @@ var Plant = function () {
 
     this._canvas = canvas;
     this.genes = new GeneSet(PLANT_GENES);
-
     if (initializeRandom) {
       this.genes.randomize();
     }
   }
 
   _createClass(Plant, [{
+    key: 'draw',
+    value: function draw() {
+      // reset leaf nodes
+      this.leafNodes = [];
+      // return false;
+      this._width = this._canvas.node.clientWidth;
+      this._height = this._canvas.node.clientHeight;
+      this.branches = [];
+      this.drawStem();
+      this.drawLeaves();
+    }
+  }, {
     key: 'swap',
     value: function swap(otherPlant) {
       var temp = {
@@ -20998,20 +21163,32 @@ var Plant = function () {
       var angle = this.genes.get('stem', 'angle')[level];
       var thickness = this.genes.get('stem', 'thickness')[level];
       var color = this.genes.get('stem', 'colors')[level];
-      var color2 = this.genes.get('stem', 'colors')[level];
+      var color2 = this.genes.get('stem', 'colors2')[level];
       var count = this.genes.get('stem', 'counts')[level];
       var length = this.genes.get('stem', 'lengths')[level];
       var style = this.genes.get('stem', 'styles')[level];
+      var colorStyle = this.genes.get('stem', 'colorstyles')[level];
+      var lengthrandomness = this.genes.get('stem', 'lengthrandomness')[level];
 
       var startAngle = (count - 1) * angle / -2;
       var branch;
+      var cString;
 
-      // var headingline = new Line(start.p2, start.pointAtAngleDeg(0, 500));
-      // this.drawDebugLine(headingline);
+      var c1 = new SColor(color.r, color.g, color.b, color.a);
+
+      var c2 = new SColor(color2.r, color2.g, color2.b, color2.a);
+
+      var colors = c1.scaleToColor(c2, count);
+
       for (var x = 0; x < count; x++) {
         switch (style) {
           case 0:
-            length = randomInt(length / 2, length);
+            if (lengthrandomness === 1) {
+              length = randomInt(1, length);
+            } else {
+              length = randomInt(length / 2, length);
+            }
+          /* falls through */
           case 1:
             branch = new Line(start.p2, start.pointAtAngleDeg(startAngle, length));
             break;
@@ -21025,12 +21202,18 @@ var Plant = function () {
         this.branches.push(branch);
         startAngle = startAngle + angle;
 
-        this.drawLine(branch, thickness, color);
+        if (colorStyle) {
+          cString = this.colorToRgbaString(color);
+        } else {
+          cString = this.colorToRgbaString(colors[x]);
+        }
+
+        this.drawLine(branch, thickness, cString);
 
         if (level + 1 < this.maxDepth) {
           this.recurseDrawStems(level + 1, branch);
         } else {
-          this.leafNodes.push(branch.p2);
+          this.leafNodes.push(branch);
         }
       }
     }
@@ -21052,41 +21235,70 @@ var Plant = function () {
     value: function drawLine(l, thickness, color) {
       var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
       line.attr('strokeWidth', thickness);
-      line.attr('stroke', this.colorToRgbaString(color));
+      line.attr('stroke', color);
     }
   }, {
     key: 'drawStem',
     value: function drawStem() {
       this.root = new Line(new Point(this._width / 2, this._height), new Point(this._width / 2, this._height / 2));
       this.maxDepth = this.genes.get('stem', 'depth');
-      console.log('maxDepth', this.maxDepth);
       this.recurseDrawStems(0, this.root);
     }
   }, {
     key: 'drawLeaf',
-    value: function drawLeaf(point) {
+    value: function drawLeaf(point, color, color2, strokeColor) {
       var leafSize = this.genes.get('leaf', 'size');
-      var leaf = this._canvas.circle(point.x, point.y, leafSize);
-      leaf.attr('fill', this.colorToRgbaString(this.genes.get('leaf', 'colors')[0]));
+      var leafStyle = this.genes.get('leaf', 'style');
+
+      var leaf;
+      switch (leafStyle) {
+        case 0:
+          leaf = this._canvas.circle(point.p2.x, point.p2.y, leafSize);
+          leaf.attr('fill', color);
+          leaf.attr('stroke', strokeColor);
+          break;
+        case 1:
+          var smallPt = point.pointAtAngleDeg(180, leafSize);
+          leaf = this._canvas.circle(point.p2.x, point.p2.y, leafSize / .6);
+          leaf.attr('fill', color);
+          var leaf2 = this._canvas.circle(smallPt.x, smallPt.y, leafSize / .6);
+          leaf2.attr('fill', color2);
+          break;
+        default:
+          leaf = this._canvas.circle(point.p2.x, point.p2.y, leafSize);
+          leaf.attr('fill', color);
+      }
     }
   }, {
     key: 'drawLeaves',
     value: function drawLeaves() {
-      for (var i = 0; i < this.leafNodes.length; i++) {
-        this.drawLeaf(this.leafNodes[i]);
+      var colors = this.genes.get('leaf', 'colors');
+      var leafStroke = this.genes.get('leaf', 'strokes')[0];
+      var c1 = new SColor(colors[0].r, colors[0].g, colors[0].b, colors[0].a);
+
+      var c2 = new SColor(colors[1].r, colors[1].g, colors[1].b, colors[1].a);
+
+      var style = this.genes.get('leaf', 'colorstyle');
+      var colorArray = c1.scaleToColor(c2, this.leafNodes.length);
+      //console.log('style', style);
+      if (style === 1) {
+        colorArray = _.shuffle(colorArray);
       }
-    }
-  }, {
-    key: 'draw',
-    value: function draw() {
-      // reset leaf nodes
-      this.leafNodes = [];
-      // return false;
-      this._width = this._canvas.node.clientWidth;
-      this._height = this._canvas.node.clientHeight;
-      this.branches = [];
-      this.drawStem();
-      this.drawLeaves();
+      // sort by x or sort by x
+      if (style === 2 || style === 3) {
+        this.leafNodes = _.sortBy(this.leafNodes, ['x']);
+        if (style === 3) {
+          this.leafNodes = _.reverse(this.leafNodes);
+        }
+      }
+
+      for (var i = 0; i < this.leafNodes.length; i++) {
+        if (style < 4) {
+          this.drawLeaf(this.leafNodes[i], this.colorToRgbaString(colorArray[i]), this.colorToRgbaString(colors[1]), this.colorToRgbaString(leafStroke));
+        } else {
+          this.drawLeaf(this.leafNodes[i], this.colorToRgbaString(colors[0]), this.colorToRgbaString(colors[1]), this.colorToRgbaString(leafStroke));
+        }
+      }
     }
   }]);
 
@@ -21095,7 +21307,7 @@ var Plant = function () {
 
 module.exports = Plant;
 
-},{"./gene":134,"./math2d":135}],137:[function(require,module,exports){
+},{"./colors":134,"./gene":135,"./math2d":136}],138:[function(require,module,exports){
 'use strict';
 
 var seedrandom = require('../vendor/seedrandom.min');
@@ -21122,7 +21334,7 @@ module.exports = {
   toBinary: toBinaryStr
 };
 
-},{"../vendor/seedrandom.min":138}],138:[function(require,module,exports){
+},{"../vendor/seedrandom.min":139}],139:[function(require,module,exports){
 "use strict";
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };

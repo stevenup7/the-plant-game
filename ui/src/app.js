@@ -1,7 +1,8 @@
 var Plant = require('./plant');
 
 var CONSTS = {
-  NUM_PLANTS: 25
+  NUM_PLANTS: 25,
+  NUM_PARENTS: 15
 };
 
 var plants = [];
@@ -12,22 +13,28 @@ var xoverChance = 0.1;
 function init () {
   var canvasContainer = document.getElementById('main-canvas');
   var parentContainer = document.getElementById('parent-canvas');
-  createPlantSet(parentContainer, 5, 'parent-', parents);
+  createPlantSet(parentContainer, CONSTS.NUM_PARENTS, 'parent-', parents);
   createPlantSet(canvasContainer, CONSTS.NUM_PLANTS, 'plant-', plants);
+
   $('#edit-pane').hide();
 }
 
 $('#edit').click(function () {
   $('#main-canvas').toggle();
   $('#edit-pane').toggle();
-  var stringData = JSON.stringify(JSON.parse(window.localStorage.getItem('plants')), null, 2);
+  var stringData = getPlantById('parent-1').genes.toJSON();
+  stringData = JSON.stringify(JSON.parse(stringData, stringData), null, 2);
+  stringData = stringData.replace(/\s*([A-Za-z]*,)[\s]/gi, '$1');
+  stringData = stringData.replace(/(\[)[\s]/gi, '$1');
+  stringData = stringData.replace(/\s*\]\s*,/gi, '],\r');
   $('#edit-data').val(stringData);
 });
 
 
 $('#save-edit').click(function () {
   var storeString = $('#edit-data').val();
-  window.localStorage.setItem('plants', storeString);
+  getPlantById('parent-1').genes.fromJSON(storeString);
+  drawParent(1);
 });
 
 function createPlantSet (containerEl, numPlants, elementIdPrefix, holdingArray) {
@@ -69,7 +76,7 @@ function getPlantById (id) {
 }
 
 function plantDrag(ev) {
-  console.log(arguments);
+  //console.log(arguments);
   ev.dataTransfer.dropEffect ='move';
   ev.dataTransfer.setData("text/plain", ev.target.id);
 }
@@ -127,7 +134,7 @@ function draw () {
   for (var i=0; i<CONSTS.NUM_PLANTS; i++) {
     plants[i].draw();
   }
-  for (i=0; i<5; i++) {
+  for (i=0; i< CONSTS.NUM_PARENTS; i++) {
     parents[i].draw();
   }
 }

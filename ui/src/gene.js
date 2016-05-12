@@ -90,7 +90,6 @@ class Gene {
       min = definition[1];
       max = definition[2];
       if (Math.random() < mutationChance) {
-        console.log("mutating");
         this._values[genename] = this.mutateInt(this._values[genename], min, max);
       }
       break;

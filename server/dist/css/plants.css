@@ -24,3 +24,13 @@
 svg line {
     stroke-width: 1;
 }
+
+.show-hide {
+    float: right;
+}
+
+.show-hide a.show,
+.show-hide a.hide {
+    text-decoration: none;
+    color: #999;
+}

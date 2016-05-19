@@ -1,11 +1,28 @@
 
 class SColor {
 
-  constructor(r, g, b, a) {
+  constructor (r =0, g=0, b=0, a=0) {
     this.r = r;
     this.g = g;
     this.b = b;
     this.a = a;
+    return this;
+  }
+
+  fromRGBAObject (o) {
+    this.r = o.r;
+    this.g = o.g;
+    this.b = o.b;
+    this.a = o.a;
+    return this;
+  }
+
+  toRGBAString (color) {
+    return 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',' + this.a + ')';
+  }
+
+  toRGBString (color) {
+    return 'rgb(' + this.r + ',' + this.g + ',' + this.b + ')';
   }
 
   toHSLa () {

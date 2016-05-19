@@ -20295,12 +20295,46 @@ function init() {
   createPlantSet(parentContainer, CONSTS.NUM_PARENTS, 'parent-', parents);
   createPlantSet(canvasContainer, CONSTS.NUM_PLANTS, 'plant-', plants);
 
-  $('#edit-pane').hide();
+  var data = getCurrData();
+  var saveSet;
+  for (saveSet in data) {
+    if (data.hasOwnProperty(saveSet)) {
+      $('select').append($('<option>', { value: saveSet, text: saveSet }));
+    }
+  }
+
+  $('.show-hide .show').hide();
+  $('.show-hide .show, .show-hide .hide').click(function (e) {
+    var showHideWrapper = $(this).parent();
+    var state = showHideWrapper.data('show-hide');
+    state = !state;
+    showHideWrapper.data('show-hide', state);
+    if (state) {
+      showHideWrapper.siblings().show();
+      $('.show-hide .show').hide();
+      $('.show-hide .hide').show();
+    } else {
+      showHideWrapper.siblings().hide();
+      $('.show-hide .hide').hide();
+      $('.show-hide .show').show();
+    }
+  });
+  showPane('main');
 }
 
+function showPane(pane) {
+  $('#main-pane').hide();
+  $('#edit-pane').hide();
+  $('#about-pane').hide();
+  $('#' + pane + '-pane').show();
+}
+
+$('#show-about').click(function () {
+  showPane('about');
+});
+
 $('#edit').click(function () {
-  $('#main-canvas').toggle();
-  $('#edit-pane').toggle();
+  showPane('edit');
   var stringData = getPlantById('parent-1').genes.toJSON();
   stringData = JSON.stringify(JSON.parse(stringData, stringData), null, 2);
   stringData = stringData.replace(/\s*([A-Za-z]*,)[\s]/gi, '$1');
@@ -20313,7 +20347,17 @@ $('#save-edit').click(function () {
   var storeString = $('#edit-data').val();
   getPlantById('parent-1').genes.fromJSON(storeString);
   drawParent(1);
+  showPane('main');
 });
+
+function getCurrData() {
+  var data = window.localStorage.getItem('plants');
+  if (data === '') {
+    return {};
+  } else {
+    return JSON.parse(data);
+  }
+}
 
 function createPlantSet(containerEl, numPlants, elementIdPrefix, holdingArray) {
   var plantCanvas;
@@ -20401,7 +20445,6 @@ function swap(firstId, secondId) {
   // todo only draw changed
   $("#" + firstId + ' svg *').remove();
   $("#" + secondId + ' svg *').remove();
-
   plant1.draw();
   plant2.draw();
 }
@@ -20452,18 +20495,39 @@ $(document).ready(function () {
     breed('parent-0', 'parent-1', 0.1);
   });
 
+  $('#save-set-list').change(function (event) {
+    $('#save-set-name').val($(this).val());
+  });
+
+  function getSaveSetName() {
+    var name = $('#save-set-name').val();
+    if (name === "") {
+      name = "default";
+    }
+    return name;
+  }
+
   $('#save').click(function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    var currData = getCurrData();
+    var saveName = getSaveSetName();
+
     var storeObj = {};
     for (var i = 0; i < parents.length; i++) {
       storeObj['parent' + i] = parents[i].genes.toJSON();
     }
-    var storeString = JSON.stringify(storeObj);
+    currData[saveName] = storeObj;
+    var storeString = JSON.stringify(currData);
     window.localStorage.setItem('plants', storeString);
   });
 
   $('#load').click(function (event) {
-    var stringData = window.localStorage.getItem('plants');
-    var data = JSON.parse(stringData);
+    event.preventDefault();
+    event.stopPropagation();
+    var currData = getCurrData();
+    var saveName = getSaveSetName();
+    var data = currData[saveName];
 
     for (var i = 0; i < parents.length; i++) {
       parents[i].genes.fromJSON(data['parent' + i]);
@@ -20472,8 +20536,6 @@ $(document).ready(function () {
   });
 
   $(document).keyup(function (ev) {
-    var digit = ev.which - 48;
-    // track which of the 1 -5 keys is down
     var char = String.fromCharCode(ev.which);
     console.log(char);
     if (char === 'B') {
@@ -20485,66 +20547,61 @@ $(document).ready(function () {
     if (char === 'M') {
       breed('parent-0', 'parent-1', 0.2);
     }
-
     if (char === 'R') {
       randomize();
     }
   });
-
-  // function selectParent (id) {
-  //   $('#parent-canvas .plant-container').removeClass('selected');
-  //   $("#parent-" + id).addClass('selected');
-  //   selectedParent = id;
-  // }
-
-  // $('.plant-container').click(function(event) {
-  //   var elID = this.getAttribute('id');
-  //   var parentid;
-  //   var plant;
-  //   var plantid;
-  //   var isParent = false;
-  //   var parentPlant;
-
-  //   if (elID.indexOf('parent') === 0) {
-  //     plantid = parseInt(elID.replace('parent-', ''), 10);
-  //     selectParent(plantid);
-  //     plant = parents[plantid];
-  //   } else {
-  //     plantid = parseInt(elID.replace('plant-', ''), 10);
-  //     plant = plants[plantid];
-  //     parentPlant = parents[selectedParent];
-  //     plant.swap(parentPlant);
-  //     drawParent(selectedParent);
-  //     drawPlant(plantid);
-  //   }
-  //   console.log(JSON.stringify(plant.genes, null, 2));
-  // });
 });
 
 },{"./plant":137}],134:[function(require,module,exports){
-"use strict";
+'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var SColor = function () {
-  function SColor(r, g, b, a) {
+  function SColor() {
+    var r = arguments.length <= 0 || arguments[0] === undefined ? 0 : arguments[0];
+    var g = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+    var b = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
+    var a = arguments.length <= 3 || arguments[3] === undefined ? 0 : arguments[3];
+
     _classCallCheck(this, SColor);
 
     this.r = r;
     this.g = g;
     this.b = b;
     this.a = a;
+    return this;
   }
 
   _createClass(SColor, [{
-    key: "toHSLa",
+    key: 'fromRGBAObject',
+    value: function fromRGBAObject(o) {
+      this.r = o.r;
+      this.g = o.g;
+      this.b = o.b;
+      this.a = o.a;
+      return this;
+    }
+  }, {
+    key: 'toRGBAString',
+    value: function toRGBAString(color) {
+      return 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',' + this.a + ')';
+    }
+  }, {
+    key: 'toRGBString',
+    value: function toRGBString(color) {
+      return 'rgb(' + this.r + ',' + this.g + ',' + this.b + ')';
+    }
+  }, {
+    key: 'toHSLa',
     value: function toHSLa() {
       return rgbToHsl(this);
     }
   }, {
-    key: "scaleToColor",
+    key: 'scaleToColor',
     value: function scaleToColor(otherColor, num) {
       var rslt = [];
       var c1 = this.toHSLa();
@@ -21102,23 +21159,18 @@ var SColor = require('./colors').SColor;
 var MAX_DEPTH = 4;
 
 var PLANT_GENES = {
-  leaf: {
-    style: ["int", 0, 2],
-    size: ["int", 1, 10],
-    colors: ["colorArray", 4],
-    strokes: ["colorArray", 2],
-    colorstyle: ["int", 0, 3]
+  general: {
+    hasRandomness: ["int", 0, 1],
+    structure: ["int", 0, 1]
   },
   stem: {
-    thickness: ["intArray", MAX_DEPTH, 1, 3],
+    thickness: ["intArray", MAX_DEPTH + 1, 1, 10],
     angle: ["intArray", MAX_DEPTH, 5, 100],
-    counts: ["intArray", MAX_DEPTH, 1, 6],
-    lengths: ["intArray", MAX_DEPTH, 3, 40],
-    styles: ["intArray", MAX_DEPTH, 0, 2],
-    colorstyles: ["intArray", MAX_DEPTH, 0, 1],
-    lengthrandomness: ["intArray", MAX_DEPTH, 0, 1],
+    counts: ["intArray", MAX_DEPTH, 1, 7],
+    lengths: ["intArray", MAX_DEPTH, 1, 35],
+    styles: ["intArray", MAX_DEPTH, 1, 35],
+    lengthrandomness: ["intArray", MAX_DEPTH, 0, 2],
     colors: ["colorArray", MAX_DEPTH],
-    colors2: ["colorArray", MAX_DEPTH],
     depth: ["int", 1, MAX_DEPTH]
   }
 };
@@ -21146,7 +21198,7 @@ var Plant = function () {
       this._height = this._canvas.node.clientHeight;
       this.branches = [];
       this.drawStem();
-      this.drawLeaves();
+      //this.drawLeaves();
     }
   }, {
     key: 'swap',
@@ -21162,65 +21214,40 @@ var Plant = function () {
     value: function recurseDrawStems(level, start) {
       var angle = this.genes.get('stem', 'angle')[level];
       var thickness = this.genes.get('stem', 'thickness')[level];
+      var thicknessNext = this.genes.get('stem', 'thickness')[level + 1] || 1;
       var color = this.genes.get('stem', 'colors')[level];
-      var color2 = this.genes.get('stem', 'colors2')[level];
       var count = this.genes.get('stem', 'counts')[level];
       var length = this.genes.get('stem', 'lengths')[level];
       var style = this.genes.get('stem', 'styles')[level];
-      var colorStyle = this.genes.get('stem', 'colorstyles')[level];
-      var lengthrandomness = this.genes.get('stem', 'lengthrandomness')[level];
-
-      var startAngle = (count - 1) * angle / -2;
+      var startAngle;
       var branch;
       var cString;
 
-      var c1 = new SColor(color.r, color.g, color.b, color.a);
-
-      var c2 = new SColor(color2.r, color2.g, color2.b, color2.a);
-
-      var colors = c1.scaleToColor(c2, count);
+      if (style === 1) {
+        angle = 360 / count;
+        startAngle = 0;
+      } else {
+        startAngle = (count - 1) * angle / -2;
+      }
+      var c1 = new SColor().fromRGBAObject(color);
+      var g = this._canvas.g(); // group to draw onto
 
       for (var x = 0; x < count; x++) {
-        switch (style) {
-          case 0:
-            if (lengthrandomness === 1) {
-              length = randomInt(1, length);
-            } else {
-              length = randomInt(length / 2, length);
-            }
-          /* falls through */
-          case 1:
-            branch = new Line(start.p2, start.pointAtAngleDeg(startAngle, length));
-            break;
-          case 2:
-            branch = new Line(start.p2, start.p2.pointAtAngleDeg(startAngle, length));
-            break;
-          default:
-            throw 'bad style';
-        }
-
+        branch = new Line(start.p2, start.pointAtAngleDeg(startAngle, length));
         this.branches.push(branch);
         startAngle = startAngle + angle;
 
-        if (colorStyle) {
-          cString = this.colorToRgbaString(color);
-        } else {
-          cString = this.colorToRgbaString(colors[x]);
-        }
-
-        this.drawLine(branch, thickness, cString);
-
+        cString = c1.toRGBString();
         if (level + 1 < this.maxDepth) {
+          this.drawLine(g, branch, thickness, thicknessNext, cString);
           this.recurseDrawStems(level + 1, branch);
         } else {
+          this.drawLine(g, branch, thickness, thicknessNext, cString, true);
           this.leafNodes.push(branch);
         }
       }
-    }
-  }, {
-    key: 'colorToRgbaString',
-    value: function colorToRgbaString(color) {
-      return 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',' + color.a + ')';
+
+      g.attr('opacity', c1.a);
     }
   }, {
     key: 'drawDebugLine',
@@ -21232,10 +21259,29 @@ var Plant = function () {
     }
   }, {
     key: 'drawLine',
-    value: function drawLine(l, thickness, color) {
-      var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
-      line.attr('strokeWidth', thickness);
-      line.attr('stroke', color);
+    value: function drawLine(g, l, thicknessStart, thicknessEnd, color) {
+      var isLeaf = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
+
+      // var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
+      //line.attr('stroke', 'red');
+      // ptl    -   ptr
+      //       | |
+      //       | |
+      //      /   \
+      //      |   |
+      // pbr  |___| pbl
+
+      var pbl = l.p1.pointAtAngleDeg(l.angleDeg() - 90, thicknessStart / 2);
+      var pbr = l.p1.pointAtAngleDeg(l.angleDeg() + 90, thicknessStart / 2);
+      var ptl = l.pointAtAngleDeg(-90, thicknessEnd / 2);
+      var ptr = l.pointAtAngleDeg(90, thicknessEnd / 2);
+      g.add(this._canvas.polygon(pbl.x, pbl.y, pbr.x, pbr.y, ptr.x, ptr.y, ptl.x, ptl.y).attr({ fill: color }));
+
+      g.add(this._canvas.circle(l.p1.x, l.p1.y, thicknessStart / 2).attr({ fill: color }));
+
+      if (isLeaf) {
+        g.add(this._canvas.circle(l.p2.x, l.p2.y, thicknessEnd / 2).attr({ fill: color }));
+      }
     }
   }, {
     key: 'drawStem',
@@ -21259,9 +21305,9 @@ var Plant = function () {
           break;
         case 1:
           var smallPt = point.pointAtAngleDeg(180, leafSize);
-          leaf = this._canvas.circle(point.p2.x, point.p2.y, leafSize / .6);
+          leaf = this._canvas.circle(point.p2.x, point.p2.y, leafSize / 0.6);
           leaf.attr('fill', color);
-          var leaf2 = this._canvas.circle(smallPt.x, smallPt.y, leafSize / .6);
+          var leaf2 = this._canvas.circle(smallPt.x, smallPt.y, leafSize / 0.6);
           leaf2.attr('fill', color2);
           break;
         default:
@@ -21272,6 +21318,7 @@ var Plant = function () {
   }, {
     key: 'drawLeaves',
     value: function drawLeaves() {
+      //return;
       var colors = this.genes.get('leaf', 'colors');
       var leafStroke = this.genes.get('leaf', 'strokes')[0];
       var c1 = new SColor(colors[0].r, colors[0].g, colors[0].b, colors[0].a);

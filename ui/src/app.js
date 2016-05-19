@@ -16,12 +16,46 @@ function init () {
   createPlantSet(parentContainer, CONSTS.NUM_PARENTS, 'parent-', parents);
   createPlantSet(canvasContainer, CONSTS.NUM_PLANTS, 'plant-', plants);
 
-  $('#edit-pane').hide();
+  var data = getCurrData();
+  var saveSet;
+  for (saveSet in data) {
+    if(data.hasOwnProperty(saveSet)) {
+      $('select').append($('<option>', {value:saveSet, text:saveSet}));
+    }
+  }
+
+  $('.show-hide .show').hide();
+  $('.show-hide .show, .show-hide .hide').click(function (e) {
+    var showHideWrapper = $(this).parent();
+    var state = showHideWrapper.data('show-hide');
+    state = !state;
+    showHideWrapper.data('show-hide', state);
+    if (state) {
+      showHideWrapper.siblings().show();
+      $('.show-hide .show').hide();
+      $('.show-hide .hide').show();
+    } else {
+      showHideWrapper.siblings().hide();
+      $('.show-hide .hide').hide();
+      $('.show-hide .show').show();
+    }
+  });
+  showPane('main');
 }
 
+function showPane(pane) {
+  $('#main-pane').hide();
+  $('#edit-pane').hide();
+  $('#about-pane').hide();
+  $('#' + pane + '-pane').show();
+}
+
+$('#show-about').click(function () {
+  showPane('about');
+});
+
 $('#edit').click(function () {
-  $('#main-canvas').toggle();
-  $('#edit-pane').toggle();
+  showPane('edit');
   var stringData = getPlantById('parent-1').genes.toJSON();
   stringData = JSON.stringify(JSON.parse(stringData, stringData), null, 2);
   stringData = stringData.replace(/\s*([A-Za-z]*,)[\s]/gi, '$1');
@@ -35,7 +69,17 @@ $('#save-edit').click(function () {
   var storeString = $('#edit-data').val();
   getPlantById('parent-1').genes.fromJSON(storeString);
   drawParent(1);
+  showPane('main');
 });
+
+function getCurrData () {
+  var data = window.localStorage.getItem('plants');
+  if (data === '') {
+    return {};
+  } else {
+    return JSON.parse(data);
+  }
+}
 
 function createPlantSet (containerEl, numPlants, elementIdPrefix, holdingArray) {
   var plantCanvas;
@@ -121,12 +165,9 @@ function swap(firstId, secondId) {
   // todo only draw changed
   $("#" + firstId + ' svg *').remove();
   $("#" + secondId + ' svg *').remove();
-
   plant1.draw();
   plant2.draw();
-
 }
-
 
 function draw () {
   $('svg *').remove();
@@ -138,10 +179,6 @@ function draw () {
     parents[i].draw();
   }
 }
-
-
-
-
 
 function drawPlant (i) {
   $('#plant-' + i + ' svg *').remove();
@@ -178,21 +215,39 @@ $(document).ready(() => {
     breed('parent-0', 'parent-1', 0.1);
   });
 
+  $('#save-set-list').change(function (event) {
+    $('#save-set-name').val($(this).val());
+  });
 
+  function getSaveSetName() {
+    var name = $('#save-set-name').val();
+    if (name ===  ""){
+      name = "default";
+    }
+    return name;
+  }
 
   $('#save').click(function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    var currData = getCurrData();
+    var saveName = getSaveSetName();
+
     var storeObj = {};
     for(var i = 0; i < parents.length; i++) {
       storeObj['parent' + i] = parents[i].genes.toJSON();
     }
-    var storeString = JSON.stringify(storeObj);
+    currData[saveName] = storeObj;
+    var storeString = JSON.stringify(currData);
     window.localStorage.setItem('plants', storeString);
-
   });
 
   $('#load').click(function(event) {
-    var stringData = window.localStorage.getItem('plants');
-    var data = JSON.parse(stringData);
+    event.preventDefault();
+    event.stopPropagation();
+    var currData = getCurrData();
+    var saveName = getSaveSetName();
+    var data = currData[saveName];
 
     for(var i = 0; i < parents.length; i++) {
       parents[i].genes.fromJSON(data['parent' + i]);
@@ -200,12 +255,7 @@ $(document).ready(() => {
     draw();
   });
 
-
-
-
   $(document).keyup(function (ev) {
-    var digit = ev.which - 48;
-    // track which of the 1 -5 keys is down
     var char = String.fromCharCode(ev.which);
     console.log(char);
     if(char === 'B') {
@@ -217,41 +267,10 @@ $(document).ready(() => {
     if(char === 'M') {
       breed('parent-0', 'parent-1', 0.2);
     }
-
-
     if(char === 'R') {
       randomize();
     }
-
   });
 
-  // function selectParent (id) {
-  //   $('#parent-canvas .plant-container').removeClass('selected');
-  //   $("#parent-" + id).addClass('selected');
-  //   selectedParent = id;
-  // }
-
-  // $('.plant-container').click(function(event) {
-  //   var elID = this.getAttribute('id');
-  //   var parentid;
-  //   var plant;
-  //   var plantid;
-  //   var isParent = false;
-  //   var parentPlant;
-
-  //   if (elID.indexOf('parent') === 0) {
-  //     plantid = parseInt(elID.replace('parent-', ''), 10);
-  //     selectParent(plantid);
-  //     plant = parents[plantid];
-  //   } else {
-  //     plantid = parseInt(elID.replace('plant-', ''), 10);
-  //     plant = plants[plantid];
-  //     parentPlant = parents[selectedParent];
-  //     plant.swap(parentPlant);
-  //     drawParent(selectedParent);
-  //     drawPlant(plantid);
-  //   }
-  //   console.log(JSON.stringify(plant.genes, null, 2));
-  // });
 
 });

@@ -20,45 +20,40 @@
       <div id="menu">
         <div class="pure-menu">
           <a class="pure-menu-heading" href="#">Plants</a>
-
           <ul class="pure-menu-list">
-
-
-            <li class="pure-menu-item">
-              <a href="#" class="pure-menu-link" id="randomize">Randomize</a>
-            </li>
-            <li class="pure-menu-item">
-              <a href="#" class="pure-menu-link" id="breed">Breed</a>
-            </li>
-
-            <li class="pure-menu-item">
-              <a href="#" class="pure-menu-link" id="breedHighMutation">
-                Breed +mut</a>
-            </li>
-
-            <li class="pure-menu-item">
-              <a href="#" class="pure-menu-link" id="load">Load (local)</a>
-            </li>
-            <li class="pure-menu-item">
-              <a href="#" class="pure-menu-link" id="save">Save (local)</a>
-            </li>
-
-            <li class="pure-menu-item">
-              <a href="#" class="pure-menu-link" id="edit">edit</a>
-            </li>
-
-            <li class="pure-menu-item"><a href="#" class="pure-menu-link">About</a></li>
-
-
-            <li class="pure-menu-item"><a href="#" class="pure-menu-link">Contact</a></li>
+            <li class="pure-menu-item"><a href="#" class="pure-menu-link" id="randomize">Randomize</a></li>
+            <li class="pure-menu-item"><a href="#" class="pure-menu-link" id="breed">Breed</a></li>
+            <li class="pure-menu-item"><a href="#" class="pure-menu-link" id="breedHighMutation">
+                Breed & Mutate</a></li>
+            <li class="pure-menu-item hidden"><a href="#" class="pure-menu-link" id="edit">edit</a></li>
+            <li class="pure-menu-item"><a href="#" class="pure-menu-link" id="show-about">About</a></li>
           </ul>
         </div>
       </div>
 
-      <div id="main">
-        <div class="header">
-          <h1>Plants</h1>
-          <h2>Generative Drawing - Some code</h2>
+      <div class="header">
+        <h1>Plants</h1>
+        <h2>Generative Drawing - Some code</h2>
+      </div>
+
+
+      <div id="main-pane">
+        <div id="save-set-wrapper">
+          <div class="show-hide" data-show-hide="true">
+            <a href="#" class="show pure-button button-xsmall">show save set name</a>
+            <a href="#" class="hide pure-button button-xsmall">hide</a>
+          </div>
+          <div class="content">
+            <form class="pure-form">
+              <fieldset>
+                <input type="text" id="save-set-name" />
+                <select id="save-set-list">
+                </select>
+                <button id="load" class="pure-button pure-button-primary">load</button>
+                <button id="save" class="pure-button pure-button-primary">save</button>
+              </fieldset>
+            </form>
+          </div>
         </div>
 
         <div class="content" id="game">
@@ -68,17 +63,34 @@
           <div id="main-canvas"></div>
         </div>
       </div>
-      <div class="content" id="edit-pane">
 
+      <div class="content hidden" id="edit-pane">
         <form class="pure-form">
           <fieldset>
-            <legend>A compact inline form</legend>
+            <legend>Advancded feature use at own risk</legend>
             <textarea rows="20" cols="80" style="width: 100%" id="edit-data"></textarea>
           </fieldset>
         </form>
         <button id="save-edit">save</button>
       </div>
+
+      <div class="content hidden" id="about-pane">
+        <h2>What is this thing?</h2>
+        <p>The plant game is a little bit of code that draws pictures of "plants" </p>
+        <h2>How do I play the plant game ?</h2>
+        <p>Its easy just drag one plant onto another one and they will "breed" their
+          "children" will have some characteristics of both parents.</p>
+        <p>The screen is divided up into two parts parents and children, the parents are not
+          replaced when you breed the children will be overwritten every time you breed.</p>
+
+        <h2>Who would make this weird thing ?</h2>
+        <p>The plant game was written by steven upritchard
+          <a href="mailto:plant-game@upritchard.com">plant-game@upritchard.com</a></p>
+      </div>
+
     </div>
+
+
     <script src="js/zepto.min.js"></script>
     <script src="js/snap.svg-min.js"></script>
     <script src="js/lodash.min.js"></script>

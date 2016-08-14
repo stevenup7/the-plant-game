@@ -16,18 +16,24 @@ var PLANT_GENES = {
     angle:            ["intArray",   MAX_DEPTH, 5, 100],
     counts:           ["intArray",   MAX_DEPTH, 1, 7],
     lengths:          ["intArray",   MAX_DEPTH, 1, 35],
-    styles:           ["intArray",   MAX_DEPTH, 1, 35],
+    branchStyles:     ["intArray",   MAX_DEPTH, 1, 2],
+    styles:           ["intArray",   MAX_DEPTH, 1, 10],
+    blurry:           ["intArray",   MAX_DEPTH, 1, 5],
     lengthrandomness: ["intArray",   MAX_DEPTH, 0, 2],
     colors:           ["colorArray", MAX_DEPTH],
+    strokeColors:     ["colorArray", MAX_DEPTH],
     depth:            ["int", 1,     MAX_DEPTH]
   }
 };
+
+
 
 class Plant {
 
   constructor (canvas, initializeRandom = true) {
     this._canvas = canvas;
     this.genes = new GeneSet(PLANT_GENES);
+
     if (initializeRandom) {
       this.genes.randomize();
     }
@@ -40,6 +46,9 @@ class Plant {
     this._width = this._canvas.node.clientWidth;
     this._height = this._canvas.node.clientHeight;
     this.branches = [];
+
+    this.f = this._canvas.filter(Snap.filter.blur(1, 1));
+    this._canvas.append(this.f);
     this.drawStem();
     //this.drawLeaves();
   }
@@ -53,24 +62,27 @@ class Plant {
   }
 
   recurseDrawStems (level, start) {
-    var angle         = this.genes.get('stem', 'angle'      )[level];
-    var thickness     = this.genes.get('stem', 'thickness'  )[level];
-    var thicknessNext = this.genes.get('stem', 'thickness'  )[level +1] || 1;
-    var color         = this.genes.get('stem', 'colors'     )[level];
-    var count         = this.genes.get('stem', 'counts'     )[level];
-    var length        = this.genes.get('stem', 'lengths'    )[level];
-    var style         = this.genes.get('stem', 'styles'     )[level];
+    var angle         = this.genes.get('stem', 'angle'       )[level];
+    var thickness     = this.genes.get('stem', 'thickness'   )[level];
+    var thicknessNext = this.genes.get('stem', 'thickness'   )[level +1] || 1;
+    var color         = this.genes.get('stem', 'colors'      )[level];
+    var count         = this.genes.get('stem', 'counts'      )[level];
+    var length        = this.genes.get('stem', 'lengths'     )[level];
+    var style         = this.genes.get('stem', 'styles'      )[level];
+    var blurry        = this.genes.get('stem', 'blurry'      )[level];
+    var branchStyle         = this.genes.get('stem', 'branchStyles')[level];
     var startAngle;
     var branch;
     var cString;
 
-    if (style === 1) {
+    if (branchStyle === 1) {
       angle = 360 / count;
       startAngle = 0;
     } else {
       startAngle = ((count-1) * angle)/-2;
     }
     var c1 = new SColor().fromRGBAObject(color);
+
     var g = this._canvas.g(); // group to draw onto
 
     for(var x=0; x< count; x++) {
@@ -80,15 +92,29 @@ class Plant {
 
       cString = c1.toRGBString();
       if (level + 1 < this.maxDepth) {
-        this.drawLine(g, branch, thickness, thicknessNext, cString);
+        if (style < 8) {
+          this.drawLine2(g, branch, thickness, thicknessNext, cString);
+        } else if ( style === 9) {
+          this.drawLine2(g, branch, thickness, thickness, cString);
+        } else {
+          // do nothing
+        }
+
         this.recurseDrawStems(level +1, branch);
       } else {
-        this.drawLine(g, branch, thickness, thicknessNext, cString, true);
+        this.drawLine2(g, branch, thickness, thicknessNext, cString, true);
+        // this.drawDebugLine(branch);
         this.leafNodes.push(branch);
       }
     }
-
-    g.attr('opacity', c1.a);
+    if( blurry ===1 ) {
+      g.attr({
+        'opacity': c1.a,
+        'filter': this.f
+      }); // set the opacity of the group
+    } else {
+      g.attr('opacity', c1.a);
+    }
   }
 
   drawDebugLine (l) {
@@ -97,6 +123,47 @@ class Plant {
     line.attr('strokeDasharray', '4, 10');
     line.attr('stroke', 'rgba(255,0,0,0.5)');
   }
+
+
+  drawLine2 (g, l, thicknessStart, thicknessEnd, color, isLeaf = false) {
+    // bottom  left right and point of the quadratic curve
+    var pbl = l.p1.pointAtAngleDeg(l.angleDeg() - 90, thicknessStart/2);
+    var pbr = l.p1.pointAtAngleDeg(l.angleDeg() + 90, thicknessStart/2);
+    var pbq = l.p1.pointAtAngleDeg(l.angleDeg() + 180, thicknessStart * 0.7);
+
+    var ptl = l.pointAtAngleDeg(-90, thicknessEnd/2);
+    var ptr = l.pointAtAngleDeg( 90, thicknessEnd/2);
+    var ptq = l.pointAtAngleDeg(0, thicknessEnd * 0.7);
+
+
+    g.add(this._canvas.path(
+      `M ${ptl.svgStr()} Q ${ptq.svgStr()}, ${ptr.svgStr()}
+       L ${pbr.svgStr()} Q ${pbq.svgStr()}, ${pbl.svgStr()} L ${ptl.svgStr()}`
+    ).attr({fill: color}));
+
+
+  }
+
+  drawLine3 (g, l, thicknessStart, thicknessEnd, color, isLeaf = false) {
+    // bottom  left right and point of the quadratic curve
+    var pbl = l.p1.pointAtAngleDeg(l.angleDeg() - 90, thicknessStart/2);
+    var pbr = l.p1.pointAtAngleDeg(l.angleDeg() + 90, thicknessStart/2);
+    var pbq = l.p1.pointAtAngleDeg(l.angleDeg() + 180, thicknessStart * 0.7);
+
+    var ptl = l.pointAtAngleDeg(-90, thicknessEnd/2);
+    var ptr = l.pointAtAngleDeg( 90, thicknessEnd/2);
+    var ptq = l.pointAtAngleDeg(0, thicknessEnd * 0.7);
+
+    var pc = l.pointAtCenter();
+
+    var lineCenterPoint =
+    g.add(this._canvas.path(
+      `M ${ptl.svgStr()} Q ${ptq.svgStr()}, ${ptr.svgStr()}
+       L ${pbr.svgStr()} Q ${pbq.svgStr()}, ${pbl.svgStr()} L ${ptl.svgStr()}`
+    )).attr({fill: color});
+
+  }
+
 
 
   drawLine (g, l, thicknessStart, thicknessEnd, color, isLeaf = false) {
@@ -113,6 +180,7 @@ class Plant {
     var pbr = l.p1.pointAtAngleDeg(l.angleDeg() + 90, thicknessStart/2);
     var ptl = l.pointAtAngleDeg(-90, thicknessEnd/2);
     var ptr = l.pointAtAngleDeg( 90, thicknessEnd/2);
+
     g.add(this._canvas.polygon(
       pbl.x, pbl.y,
       pbr.x, pbr.y,

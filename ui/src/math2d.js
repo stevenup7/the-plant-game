@@ -19,6 +19,10 @@ class Point {
     this.y = y;
   }
 
+  svgStr () {
+    return this.x + ' ' + this.y;
+  }
+
   toString () {
     return '[' + this.x + ',' + this.y + ']';
   }
@@ -32,7 +36,6 @@ class Point {
     var dy = distance * M.round(M.sin(angleRadians + 1.5 * M.PI) * 1000) / 1000;
     return new Point(this.x + dx, this.y + dy);
   }
-
 }
 
 class Line {
@@ -57,6 +60,13 @@ class Line {
 
   pointAtAngleDeg (angleDeg, distance ) {
     return this.pointAtAngle(angleDeg * M.PI/180, distance);
+  }
+
+  pointAtCenter ( ) {
+    return new Point(
+      (this.p1.x + this.p2.x) /2,
+      (this.p1.y + this.p2.y) /2
+    );
   }
 
   pointAtAngle (angleRadians, distance) {

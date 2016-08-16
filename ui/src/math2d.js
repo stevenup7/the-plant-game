@@ -27,6 +27,22 @@ class Point {
     return '[' + this.x + ',' + this.y + ']';
   }
 
+  toArray () {
+    return [this.x, this.y];
+  }
+
+  copy () {
+    return new Point(this.x, this.y);
+  }
+
+  distanceTo (p2) {
+    var x = this.x - p2.x;
+    var y = this.y - p2.y;
+    return Math.sqrt(
+      (x*x) + (y*y)
+    );
+  }
+
   pointAtAngleDeg (angleDeg, distance ) {
     return this.pointAtAngle(angleDeg * M.PI/180, distance);
   }

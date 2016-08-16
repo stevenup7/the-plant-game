@@ -1,11 +1,12 @@
-var Plant = require('./plant');
+var Drawing = require('./face');
+
 
 var CONSTS = {
-  NUM_PLANTS: 25,
+  NUM_DRAWINGS: 25,
   NUM_PARENTS: 15
 };
 
-var plants = [];
+var drawings = [];
 var parents = [];
 var selectedParent = 0;
 var xoverChance = 0.1;
@@ -15,8 +16,8 @@ function init () {
   console.log(filter);
   var canvasContainer = document.getElementById('main-canvas');
   var parentContainer = document.getElementById('parent-canvas');
-  createPlantSet(parentContainer, CONSTS.NUM_PARENTS, 'parent-', parents);
-  createPlantSet(canvasContainer, CONSTS.NUM_PLANTS, 'plant-', plants);
+  createDrawingSet(parentContainer, CONSTS.NUM_PARENTS, 'parent-', parents);
+  createDrawingSet(canvasContainer, CONSTS.NUM_DRAWINGS, 'drawing-', drawings);
 
   var data = getCurrData();
   var saveSet;
@@ -58,7 +59,7 @@ $('#show-about').click(function () {
 
 $('#edit').click(function () {
   showPane('edit');
-  var stringData = getPlantById('parent-1').genes.toJSON();
+  var stringData = getDrawingById('parent-1').genes.toJSON();
   stringData = JSON.stringify(JSON.parse(stringData, stringData), null, 2);
   stringData = stringData.replace(/\s*([A-Za-z]*,)[\s]/gi, '$1');
   stringData = stringData.replace(/(\[)[\s]/gi, '$1');
@@ -69,13 +70,13 @@ $('#edit').click(function () {
 
 $('#save-edit').click(function () {
   var storeString = $('#edit-data').val();
-  getPlantById('parent-1').genes.fromJSON(storeString);
+  getDrawingById('parent-1').genes.fromJSON(storeString);
   drawParent(1);
   showPane('main');
 });
 
 function getCurrData () {
-  var data = window.localStorage.getItem('plants');
+  var data = window.localStorage.getItem('drawings');
   if (data === '') {
     return {};
   } else {
@@ -83,34 +84,34 @@ function getCurrData () {
   }
 }
 
-function createPlantSet (containerEl, numPlants, elementIdPrefix, holdingArray) {
-  var plantCanvas;
+function createDrawingSet (containerEl, numDrawings, elementIdPrefix, holdingArray) {
+  var drawingCanvas;
   var svgEl;
   var width;
   var height;
 
-  for (var i=0; i<numPlants; i++) {
-    plantCanvas = document.createElement('div');
-    plantCanvas.setAttribute('id', elementIdPrefix + i);
-    plantCanvas.className = 'plant-container pure-u-1-5';
-    plantCanvas.setAttribute('draggable', true);
-    plantCanvas.setAttribute('ondragstart', 'plantDrag(event)');
-    plantCanvas.setAttribute('ondrop', 'plantDrop(event)');
-    plantCanvas.setAttribute('ondragover', 'plantDragOver(event)');
-    containerEl.appendChild(plantCanvas);
-    width = plantCanvas.clientWidth;
-    height = plantCanvas.clientHeight;
+  for (var i=0; i<numDrawings; i++) {
+    drawingCanvas = document.createElement('div');
+    drawingCanvas.setAttribute('id', elementIdPrefix + i);
+    drawingCanvas.className = 'drawing-container pure-u-1-5';
+    drawingCanvas.setAttribute('draggable', true);
+    drawingCanvas.setAttribute('ondragstart', 'drawingDrag(event)');
+    drawingCanvas.setAttribute('ondrop', 'drawingDrop(event)');
+    drawingCanvas.setAttribute('ondragover', 'drawingDragOver(event)');
+    containerEl.appendChild(drawingCanvas);
+    width = drawingCanvas.clientWidth;
+    height = drawingCanvas.clientHeight;
 
     svgEl = Snap(width, height);
-    svgEl.prependTo(plantCanvas);
+    svgEl.prependTo(drawingCanvas);
 
-    holdingArray[i] = new Plant(svgEl);
+    holdingArray[i] = new Drawing(svgEl);
   }
 }
 
-function getPlantById (id) {
-  var stripString = 'plant-';
-  var srcArray = plants;
+function getDrawingById (id) {
+  var stripString = 'drawing-';
+  var srcArray = drawings;
   if(id.indexOf('parent') === 0) {
     stripString = 'parent-';
     srcArray = parents;
@@ -121,23 +122,23 @@ function getPlantById (id) {
   return srcArray[id];
 }
 
-function plantDrag(ev) {
+function drawingDrag(ev) {
   //console.log(arguments);
   ev.dataTransfer.dropEffect ='move';
   ev.dataTransfer.setData("text/plain", ev.target.id);
 }
 
-function plantDragOver(ev) {
+function drawingDragOver(ev) {
   ev.preventDefault();
   var draggingId = ev.dataTransfer.getData("text");
   var dropId = ev.target.id;
 }
 
-window.plantDrag = plantDrag;
-window.plantDragOver = plantDragOver;
-window.plantDrop = plantDrop;
+window.drawingDrag = drawingDrag;
+window.drawingDragOver = drawingDragOver;
+window.drawingDrop = drawingDrop;
 
-function plantDrop(ev) {
+function drawingDrop(ev) {
   ev.preventDefault();
   var draggingId = ev.dataTransfer.getData("text");
   var dropId = ev.currentTarget.id;
@@ -150,41 +151,41 @@ function plantDrop(ev) {
 }
 
 function breed(firstId, secondId, mutation=0.01) {
-  var plant1Genes = getPlantById(firstId).genes.clone();
-  var plant2Genes = getPlantById(secondId).genes.clone();
+  var drawing1Genes = getDrawingById(firstId).genes.clone();
+  var drawing2Genes = getDrawingById(secondId).genes.clone();
 
-  for (var i=0; i<CONSTS.NUM_PLANTS; i++) {
-    plants[i].genes = plant1Genes.breed(plant2Genes, xoverChance, mutation);
+  for (var i=0; i<CONSTS.NUM_DRAWINGS; i++) {
+    drawings[i].genes = drawing1Genes.breed(drawing2Genes, xoverChance, mutation);
     // clear out the svg so can redraw
-    drawPlant(i);
+    drawDrawing(i);
   }
 }
 
 function swap(firstId, secondId) {
-  var plant1 = getPlantById(firstId);
-  var plant2 = getPlantById(secondId);
-  plant1.swap(plant2);
+  var drawing1 = getDrawingById(firstId);
+  var drawing2 = getDrawingById(secondId);
+  drawing1.swap(drawing2);
   // todo only draw changed
   $("#" + firstId + ' svg *').remove();
   $("#" + secondId + ' svg *').remove();
-  plant1.draw();
-  plant2.draw();
+  drawing1.draw();
+  drawing2.draw();
 }
 
 function draw () {
   $('svg *').remove();
 
-  for (var i=0; i<CONSTS.NUM_PLANTS; i++) {
-    plants[i].draw();
+  for (var i=0; i<CONSTS.NUM_DRAWINGS; i++) {
+    drawings[i].draw();
   }
   for (i=0; i< CONSTS.NUM_PARENTS; i++) {
     parents[i].draw();
   }
 }
 
-function drawPlant (i) {
-  $('#plant-' + i + ' svg *').remove();
-  plants[i].draw();
+function drawDrawing (i) {
+  $('#drawing-' + i + ' svg *').remove();
+  drawings[i].draw();
 }
 
 function drawParent (i) {
@@ -198,10 +199,10 @@ $(document).ready(() => {
   console.log('ready');
 
   function randomize() {
-    for (var i=0; i<CONSTS.NUM_PLANTS; i++) {
-      plants[i].genes.randomize();
+    for (var i=0; i<CONSTS.NUM_DRAWINGS; i++) {
+      drawings[i].genes.randomize();
       // clear out the svg so can redraw
-      drawPlant(i);
+      drawDrawing(i);
     }
   }
 
@@ -241,7 +242,7 @@ $(document).ready(() => {
     }
     currData[saveName] = storeObj;
     var storeString = JSON.stringify(currData);
-    window.localStorage.setItem('plants', storeString);
+    window.localStorage.setItem('drawings', storeString);
   });
 
   $('#load').click(function(event) {

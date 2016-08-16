@@ -27,7 +27,6 @@ describe('Math2d', function () {
   // });
 
 
-
   it('to give the proper points for a point at angle' , function () {
     var pOrig = new Point(0,0);
 
@@ -55,6 +54,16 @@ describe('Math2d', function () {
     var pointAtAngle = point.pointAtAngleDeg(90, 1); // ---> (1,0) -- +1 --> (2,0)
     expect(pointAtAngle.x).toBe(2);
     expect(pointAtAngle.y).toBe(0);
+  });
+
+
+  it('to be able to calculated distance between points' , function () {
+    //  3,4,5 triangle
+    var p1 = new Point(3,0);   // --------> (1,0)
+    var p2 = new Point(0,4);   // --------> (1,0)
+    expect(p1.distanceTo(p2)).toBe(5);
+    expect(p1.distanceTo(p2)).toBe(p2.distanceTo(p1));
+    /// todo more tests
   });
 
   it('to be able to add points at angles from the end of the line' , function () {

@@ -20,7 +20,8 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       '../vendor/lodash.min.js',
-      '*-spec.js'
+      // '*-spec.js'
+      'math2d-spec.js'
     ],
 
 
@@ -64,7 +65,7 @@ module.exports = function(config) {
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     browsers: ['PhantomJS'],
-    //browsers: ['Chrome'],
+    // browsers: ['Chrome'],
 
 
     // Continuous Integration mode

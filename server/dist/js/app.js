@@ -20277,14 +20277,14 @@ exports.createContext = Script.createContext = function (context) {
 },{"indexof":90}],133:[function(require,module,exports){
 'use strict';
 
-var Plant = require('./plant');
+var Drawing = require('./face');
 
 var CONSTS = {
-  NUM_PLANTS: 25,
+  NUM_DRAWINGS: 25,
   NUM_PARENTS: 15
 };
 
-var plants = [];
+var drawings = [];
 var parents = [];
 var selectedParent = 0;
 var xoverChance = 0.1;
@@ -20294,8 +20294,8 @@ function init() {
   console.log(filter);
   var canvasContainer = document.getElementById('main-canvas');
   var parentContainer = document.getElementById('parent-canvas');
-  createPlantSet(parentContainer, CONSTS.NUM_PARENTS, 'parent-', parents);
-  createPlantSet(canvasContainer, CONSTS.NUM_PLANTS, 'plant-', plants);
+  createDrawingSet(parentContainer, CONSTS.NUM_PARENTS, 'parent-', parents);
+  createDrawingSet(canvasContainer, CONSTS.NUM_DRAWINGS, 'drawing-', drawings);
 
   var data = getCurrData();
   var saveSet;
@@ -20337,7 +20337,7 @@ $('#show-about').click(function () {
 
 $('#edit').click(function () {
   showPane('edit');
-  var stringData = getPlantById('parent-1').genes.toJSON();
+  var stringData = getDrawingById('parent-1').genes.toJSON();
   stringData = JSON.stringify(JSON.parse(stringData, stringData), null, 2);
   stringData = stringData.replace(/\s*([A-Za-z]*,)[\s]/gi, '$1');
   stringData = stringData.replace(/(\[)[\s]/gi, '$1');
@@ -20347,13 +20347,13 @@ $('#edit').click(function () {
 
 $('#save-edit').click(function () {
   var storeString = $('#edit-data').val();
-  getPlantById('parent-1').genes.fromJSON(storeString);
+  getDrawingById('parent-1').genes.fromJSON(storeString);
   drawParent(1);
   showPane('main');
 });
 
 function getCurrData() {
-  var data = window.localStorage.getItem('plants');
+  var data = window.localStorage.getItem('drawings');
   if (data === '') {
     return {};
   } else {
@@ -20361,34 +20361,34 @@ function getCurrData() {
   }
 }
 
-function createPlantSet(containerEl, numPlants, elementIdPrefix, holdingArray) {
-  var plantCanvas;
+function createDrawingSet(containerEl, numDrawings, elementIdPrefix, holdingArray) {
+  var drawingCanvas;
   var svgEl;
   var width;
   var height;
 
-  for (var i = 0; i < numPlants; i++) {
-    plantCanvas = document.createElement('div');
-    plantCanvas.setAttribute('id', elementIdPrefix + i);
-    plantCanvas.className = 'plant-container pure-u-1-5';
-    plantCanvas.setAttribute('draggable', true);
-    plantCanvas.setAttribute('ondragstart', 'plantDrag(event)');
-    plantCanvas.setAttribute('ondrop', 'plantDrop(event)');
-    plantCanvas.setAttribute('ondragover', 'plantDragOver(event)');
-    containerEl.appendChild(plantCanvas);
-    width = plantCanvas.clientWidth;
-    height = plantCanvas.clientHeight;
+  for (var i = 0; i < numDrawings; i++) {
+    drawingCanvas = document.createElement('div');
+    drawingCanvas.setAttribute('id', elementIdPrefix + i);
+    drawingCanvas.className = 'drawing-container pure-u-1-5';
+    drawingCanvas.setAttribute('draggable', true);
+    drawingCanvas.setAttribute('ondragstart', 'drawingDrag(event)');
+    drawingCanvas.setAttribute('ondrop', 'drawingDrop(event)');
+    drawingCanvas.setAttribute('ondragover', 'drawingDragOver(event)');
+    containerEl.appendChild(drawingCanvas);
+    width = drawingCanvas.clientWidth;
+    height = drawingCanvas.clientHeight;
 
     svgEl = Snap(width, height);
-    svgEl.prependTo(plantCanvas);
+    svgEl.prependTo(drawingCanvas);
 
-    holdingArray[i] = new Plant(svgEl);
+    holdingArray[i] = new Drawing(svgEl);
   }
 }
 
-function getPlantById(id) {
-  var stripString = 'plant-';
-  var srcArray = plants;
+function getDrawingById(id) {
+  var stripString = 'drawing-';
+  var srcArray = drawings;
   if (id.indexOf('parent') === 0) {
     stripString = 'parent-';
     srcArray = parents;
@@ -20399,23 +20399,23 @@ function getPlantById(id) {
   return srcArray[id];
 }
 
-function plantDrag(ev) {
+function drawingDrag(ev) {
   //console.log(arguments);
   ev.dataTransfer.dropEffect = 'move';
   ev.dataTransfer.setData("text/plain", ev.target.id);
 }
 
-function plantDragOver(ev) {
+function drawingDragOver(ev) {
   ev.preventDefault();
   var draggingId = ev.dataTransfer.getData("text");
   var dropId = ev.target.id;
 }
 
-window.plantDrag = plantDrag;
-window.plantDragOver = plantDragOver;
-window.plantDrop = plantDrop;
+window.drawingDrag = drawingDrag;
+window.drawingDragOver = drawingDragOver;
+window.drawingDrop = drawingDrop;
 
-function plantDrop(ev) {
+function drawingDrop(ev) {
   ev.preventDefault();
   var draggingId = ev.dataTransfer.getData("text");
   var dropId = ev.currentTarget.id;
@@ -20430,41 +20430,41 @@ function plantDrop(ev) {
 function breed(firstId, secondId) {
   var mutation = arguments.length <= 2 || arguments[2] === undefined ? 0.01 : arguments[2];
 
-  var plant1Genes = getPlantById(firstId).genes.clone();
-  var plant2Genes = getPlantById(secondId).genes.clone();
+  var drawing1Genes = getDrawingById(firstId).genes.clone();
+  var drawing2Genes = getDrawingById(secondId).genes.clone();
 
-  for (var i = 0; i < CONSTS.NUM_PLANTS; i++) {
-    plants[i].genes = plant1Genes.breed(plant2Genes, xoverChance, mutation);
+  for (var i = 0; i < CONSTS.NUM_DRAWINGS; i++) {
+    drawings[i].genes = drawing1Genes.breed(drawing2Genes, xoverChance, mutation);
     // clear out the svg so can redraw
-    drawPlant(i);
+    drawDrawing(i);
   }
 }
 
 function swap(firstId, secondId) {
-  var plant1 = getPlantById(firstId);
-  var plant2 = getPlantById(secondId);
-  plant1.swap(plant2);
+  var drawing1 = getDrawingById(firstId);
+  var drawing2 = getDrawingById(secondId);
+  drawing1.swap(drawing2);
   // todo only draw changed
   $("#" + firstId + ' svg *').remove();
   $("#" + secondId + ' svg *').remove();
-  plant1.draw();
-  plant2.draw();
+  drawing1.draw();
+  drawing2.draw();
 }
 
 function draw() {
   $('svg *').remove();
 
-  for (var i = 0; i < CONSTS.NUM_PLANTS; i++) {
-    plants[i].draw();
+  for (var i = 0; i < CONSTS.NUM_DRAWINGS; i++) {
+    drawings[i].draw();
   }
   for (i = 0; i < CONSTS.NUM_PARENTS; i++) {
     parents[i].draw();
   }
 }
 
-function drawPlant(i) {
-  $('#plant-' + i + ' svg *').remove();
-  plants[i].draw();
+function drawDrawing(i) {
+  $('#drawing-' + i + ' svg *').remove();
+  drawings[i].draw();
 }
 
 function drawParent(i) {
@@ -20478,10 +20478,10 @@ $(document).ready(function () {
   console.log('ready');
 
   function randomize() {
-    for (var i = 0; i < CONSTS.NUM_PLANTS; i++) {
-      plants[i].genes.randomize();
+    for (var i = 0; i < CONSTS.NUM_DRAWINGS; i++) {
+      drawings[i].genes.randomize();
       // clear out the svg so can redraw
-      drawPlant(i);
+      drawDrawing(i);
     }
   }
 
@@ -20521,7 +20521,7 @@ $(document).ready(function () {
     }
     currData[saveName] = storeObj;
     var storeString = JSON.stringify(currData);
-    window.localStorage.setItem('plants', storeString);
+    window.localStorage.setItem('drawings', storeString);
   });
 
   $('#load').click(function (event) {
@@ -20555,7 +20555,7 @@ $(document).ready(function () {
   });
 });
 
-},{"./plant":137}],134:[function(require,module,exports){
+},{"./face":135}],134:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -20725,6 +20725,366 @@ function rgbToHsl(c) {
 }
 
 },{}],135:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var GeneSet = require('./gene').GeneSet;
+var randomInt = require('./gene').randomInt;
+var Point = require('./math2d').Point;
+var Line = require('./math2d').Line;
+var SColor = require('./colors').SColor;
+
+var MAX_DEPTH = 4;
+var DRAW_DEBUG = false;
+var NUM_ITERATIONS = 3;
+
+var FACE_GENES = {
+  general: {
+    hasRandomness: ["int", 0, 1],
+    structure: ["int", 0, 1]
+  },
+  face: {
+    width: ["int", 20, 90],
+    heightTop: ["int", 20, 90],
+    heightBottom: ["int", 20, 90]
+  },
+  eyes: {
+    style: ["int", 0, 4],
+    size: ["int", 0, 100],
+    separtion: ["int", 5, 90]
+  },
+  eyebrows: {
+    tilt: ["int", -10, 10],
+    width: ["int", 20, 60]
+  },
+  nose: {
+    style: ["int", 0, 4],
+    height: ["int", 0, 100],
+    width: ["int", 20, 90]
+  },
+  mouth: {
+    height: ["int", 20, 90],
+    width: ["int", 20, 90],
+    up: ["int", -10, 10],
+    center: ["int", 0, 100]
+  }
+};
+
+var lineColor = '#333';
+
+var Face = function () {
+  function Face(canvas) {
+    var initializeRandom = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+    _classCallCheck(this, Face);
+
+    this._canvas = canvas;
+    this.genes = new GeneSet(FACE_GENES);
+    if (initializeRandom) {
+      this.genes.randomize();
+    }
+  }
+
+  _createClass(Face, [{
+    key: 'draw',
+    value: function draw() {
+      // reset leaf nodes
+      // return false;
+      //Math.seedrandom("face");
+      this._width = this._canvas.node.clientWidth;
+      this._height = this._canvas.node.clientHeight;
+      this.center = new Point(this._width / 2, this._height / 2);
+
+      this.centerLineH = new Line(new Point(this._width / 2, this._height), new Point(this._width / 2, 0));
+
+      this.centerLineV = new Line(new Point(0, this._height / 2), new Point(this._width, this._height / 2));
+
+      if (DRAW_DEBUG) {
+        this.drawDebugLine(this.centerLineH);
+        this.drawDebugLine(this.centerLineV);
+      }
+
+      this.faceBorder();
+      this.eyes();
+      this.mouth();
+      this.nose();
+      Math.seedrandom();
+    }
+  }, {
+    key: 'swap',
+    value: function swap(otherFace) {
+      var temp = {
+        genes: otherFace.genes
+      };
+      otherFace.genes = this.genes;
+      this.genes = temp.genes;
+    }
+  }, {
+    key: 'nose',
+    value: function nose() {
+      var width = this.genes.get('nose', 'width') / 100 * (this._width / 4);
+      var height = this.genes.get('nose', 'height') / 100 * (this._height / 4);
+      var style = this.genes.get('nose', 'style');
+      var c = this.center;
+
+      var top = new Point(c.x, c.y - height / 2);
+      var bottomR = new Point(c.x + width / 2, c.y + height / 2);
+      var bottomL = new Point(c.x - width / 2, c.y + height / 2);
+      this.drawJitterLine(top, bottomR);
+      this.drawJitterLine(bottomR, bottomL);
+    }
+  }, {
+    key: 'eyes',
+    value: function eyes() {
+      var width = this.genes.get('face', 'width') / 100 * (this._width / 2);
+      var separtion = this.genes.get('eyes', 'separtion') / 100 * (this._width / 2);
+      var style = this.genes.get('eyes', 'style') / 100 * (this._width / 2);
+      var size = this.genes.get('eyes', 'size');
+      var eyebrowTilt = this.genes.get('eyebrows', 'eyebrowTilt');
+      var eyebrowWidth = this.genes.get('eyebrows', 'eyebrowWidth');
+
+      var c = this.center;
+      var cl = new Point(c.x - separtion, c.y);
+      var cr = new Point(c.x + separtion, c.y);
+
+      var drawPupils = true;
+      var drawOuter = true;
+
+      switch (style) {
+        case 0:
+          drawOuter = false;
+          break;
+        default:
+          drawOuter = true;
+      }
+
+      var eyeWidth = 20 * size / 100;
+      var eyeHeight = 10 * size / 100;
+
+      if (drawOuter) {
+        if (style === 1) {
+          // this.drawOval(cl, eyeHeight, eyeWidth , eyeHeight, eyeWidth, lineColor, 'white', -65, 180);
+          // this.drawOval(cr, eyeHeight, eyeWidth , eyeHeight, eyeWidth, lineColor, 'white', -180, 65);
+
+          this.drawJitterOval(cl, eyeHeight, eyeWidth, eyeHeight, eyeWidth, lineColor, 'white', -65, 180);
+          this.drawJitterOval(cr, eyeHeight, eyeWidth, eyeHeight, eyeWidth, lineColor, 'white', -180, 65);
+        } else {
+          this.drawJitterOval(cl, eyeHeight, eyeWidth, eyeHeight, eyeWidth, lineColor, 'white');
+          this.drawJitterOval(cr, eyeHeight, eyeWidth, eyeHeight, eyeWidth, lineColor, 'white');
+        }
+      }
+
+      if (drawPupils) {
+        this.drawCircle(cl, 2, lineColor, lineColor);
+        this.drawCircle(cr, 2, lineColor, lineColor);
+      }
+    }
+  }, {
+    key: 'mouth',
+    value: function mouth() {
+      var width = this.genes.get('face', 'width') / 100 * (this._width / 2);
+      var height = this.genes.get('face', 'heightBottom') / 100 * (this._height / 2);
+      var mouthHeight = this.genes.get('mouth', 'height') / 100 * height;
+      var mouthWidth = this.genes.get('mouth', 'width') / 100 * width;
+      var mouthUp = this.genes.get('mouth', 'up');
+      var mouthCenter = this.genes.get('mouth', 'center') / 100 * mouthWidth;
+
+      var c = this.center;
+      var mLeft = new Point(c.x - mouthWidth, c.y + mouthHeight);
+      var mRight = new Point(c.x + mouthWidth, c.y + mouthHeight);
+      var mCenter = new Point(c.x - mouthWidth + mouthCenter, c.y + mouthHeight + mouthUp);
+      //this.drawLine(cl, cr, 'blue');
+      this.drawJitterLine(mLeft, mCenter, 'red');
+      this.drawJitterLine(mCenter, mRight, 'red');
+    }
+  }, {
+    key: 'faceBorder',
+    value: function faceBorder() {
+      var width = this.genes.get('face', 'width') / 100 * (this._width / 2);
+      var heightTop = this.genes.get('face', 'heightTop') / 100 * (this._height / 2);
+      var heightBottom = this.genes.get('face', 'heightBottom') / 100 * (this._height / 2);
+      var c = this.center;
+      this.drawJitterOval(c, heightTop, width, heightBottom, width, lineColor, '#FDEDD6');
+    }
+  }, {
+    key: 'drawJitterLine',
+    value: function drawJitterLine(p1, p2) {
+      var color = arguments.length <= 2 || arguments[2] === undefined ? lineColor : arguments[2];
+
+      var len = p1.distanceTo(p2);
+      var steps = Math.floor(len / 10);
+
+      // todo jitter on this
+      if (steps === 0) {
+        return false;
+      }
+
+      var pStart;
+      var pEnd;
+      var j = [-0.5, 0.5];
+      // var j= [0, 0];
+
+      var dx = (p2.x - p1.x) / steps;
+      var dy = (p2.y - p1.y) / steps;
+
+      for (var x = 0; x < NUM_ITERATIONS; x++) {
+        pStart = p1.copy();
+        for (var i = 0; i <= steps; i++) {
+          pEnd = new Point(p1.x + dx * i + randomInt(j[0], j[1]), p1.y + dy * i + randomInt(j[0], j[1]));
+          if (isNaN(pEnd.x)) {
+            debugger;
+            console.log(pEnd.toString());
+          }
+
+          this.drawLine(pStart, pEnd, color);
+          pStart = pEnd;
+        }
+      }
+      //this.drawLine(pStart, p2, color);
+      //this.drawLine(pStart, p2, color);
+      return true;
+    }
+  }, {
+    key: 'drawLine',
+    value: function drawLine(p1, p2) {
+      var color = arguments.length <= 2 || arguments[2] === undefined ? lineColor : arguments[2];
+
+      var line = this._canvas.line(p1.x, p1.y, p2.x, p2.y).attr({
+        stroke: color
+      });
+    }
+  }, {
+    key: 'drawCircle',
+    value: function drawCircle(p, radius) {
+      var stroke = arguments.length <= 2 || arguments[2] === undefined ? lineColor : arguments[2];
+      var bg = arguments.length <= 3 || arguments[3] === undefined ? 'white' : arguments[3];
+
+      var c = this._canvas.circle(p.x, p.y, radius);
+      c.attr('strokeWidth', 1);
+      c.attr('fill', bg);
+      //line.attr('strokeDasharray', '4, 10');
+      c.attr('stroke', stroke);
+      return c;
+    }
+  }, {
+    key: 'getFaceRadius',
+    value: function getFaceRadius(ang, width, height) {
+      var jitter = arguments.length <= 3 || arguments[3] === undefined ? 2 : arguments[3];
+
+      var rad;
+      var ratio;
+      ang = (ang - 90) * (Math.PI / 180);
+      rad = width * height / Math.sqrt(width * width * (Math.sin(ang) * Math.sin(ang)) + height * height * (Math.cos(ang) * Math.cos(ang)));
+      return rad + randomInt(jitter * -1, jitter);
+    }
+  }, {
+    key: 'drawJitterOval',
+    value: function drawJitterOval(c, rtop, rleft, rbottom, rrigth, col) {
+      var bgcol = arguments.length <= 6 || arguments[6] === undefined ? 'none' : arguments[6];
+      var startAngle = arguments.length <= 7 || arguments[7] === undefined ? 0 : arguments[7];
+      var finishAngle = arguments.length <= 8 || arguments[8] === undefined ? 360 : arguments[8];
+
+      var pstart;
+      var pend;
+      var avgRadius = (rtop + rleft + rbottom + rrigth) / 4;
+      var angleStep = 90;
+      var jitter = 1;
+      var pts;
+
+      if (avgRadius < 30) {
+        angleStep = 20;
+        jitter = 0.5;
+      } else {
+        angleStep = 5;
+      }
+
+      for (var x = 0; x < NUM_ITERATIONS; x++) {
+        pts = [];
+
+        var numSteps = (finishAngle - startAngle) / angleStep;
+        pstart = c.pointAtAngleDeg(startAngle, this.getFaceRadius(startAngle, rrigth, rtop, jitter));
+        var ang = startAngle;
+        //for(var ang = startAngle + angleStep; ang <= finishAngle; ang += angleStep) {
+        for (var i = 1; i <= numSteps; i++) {
+          ang = startAngle + angleStep * i;
+
+          if (ang < 90) {
+            pend = c.pointAtAngleDeg(ang, this.getFaceRadius(ang, rrigth, rtop, jitter));
+          } else if (ang < 180) {
+            pend = c.pointAtAngleDeg(ang, this.getFaceRadius(ang, rrigth, rbottom, jitter));
+          } else if (ang < 270) {
+            pend = c.pointAtAngleDeg(ang, this.getFaceRadius(ang, rleft, rbottom, jitter));
+          } else {
+            pend = c.pointAtAngleDeg(ang, this.getFaceRadius(ang, rleft, rtop, jitter));
+          }
+          pts.push(pstart.toArray());
+          this._canvas.line(pstart.x, pstart.y, pend.x, pend.y).attr({
+            stroke: col,
+            fill: '#efefef'
+          });
+          pstart = pend;
+        }
+        pts.push(pend.toArray());
+        if (x === 0) {
+          this.renderArray(pts, true, lineColor, bgcol);
+        } else {
+          this.renderArray(pts, true, lineColor);
+        }
+      }
+
+      // this.drawDebugPoint(c.pointAtAngleDeg(-90,  rleft),   'blue');
+      // this.drawDebugPoint(c.pointAtAngleDeg(  0,  rtop),    'green');
+      // this.drawDebugPoint(c.pointAtAngleDeg( 90,  rrigth),  'red');
+      // this.drawDebugPoint(c.pointAtAngleDeg(180,  rbottom), 'purple');
+    }
+  }, {
+    key: 'renderArray',
+    value: function renderArray(pts) {
+      var closed = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+      var stroke = arguments.length <= 2 || arguments[2] === undefined ? 'red' : arguments[2];
+      var fill = arguments.length <= 3 || arguments[3] === undefined ? 'none' : arguments[3];
+
+      var svgString = 'M ' + pts[0][0] + ' ' + pts[0][1];
+      for (var i = 1; i < pts.length; i++) {
+        svgString += ' L ' + pts[i][0] + ' ' + pts[i][1];
+      }
+      if (closed) {
+        svgString += ' z';
+      }
+      return this._canvas.path(svgString).attr({
+        fill: fill,
+        stroke: stroke,
+        strokeWidth: 1
+      });
+    }
+  }, {
+    key: 'drawDebugLine',
+    value: function drawDebugLine(l) {
+      var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
+      line.attr('strokeWidth', 1);
+      line.attr('strokeDasharray', '4, 10');
+      line.attr('stroke', 'rgba(255,0,0,0.5)');
+    }
+  }, {
+    key: 'drawDebugPoint',
+    value: function drawDebugPoint(p, c) {
+      var line = this._canvas.circle(p.x, p.y, 5);
+      line.attr('strokeWidth', 1);
+      line.attr('fill', 'white');
+      //line.attr('strokeDasharray', '4, 10');
+      line.attr('stroke', c);
+    }
+  }]);
+
+  return Face;
+}();
+
+module.exports = Face;
+
+},{"./colors":134,"./gene":136,"./math2d":137}],136:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -21039,7 +21399,7 @@ module.exports = {
   randomInt: randomInt
 };
 
-},{"./util":138}],136:[function(require,module,exports){
+},{"./util":138}],137:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -21078,6 +21438,23 @@ var Point = function () {
     key: 'toString',
     value: function toString() {
       return '[' + this.x + ',' + this.y + ']';
+    }
+  }, {
+    key: 'toArray',
+    value: function toArray() {
+      return [this.x, this.y];
+    }
+  }, {
+    key: 'copy',
+    value: function copy() {
+      return new Point(this.x, this.y);
+    }
+  }, {
+    key: 'distanceTo',
+    value: function distanceTo(p2) {
+      var x = this.x - p2.x;
+      var y = this.y - p2.y;
+      return Math.sqrt(x * x + y * y);
     }
   }, {
     key: 'pointAtAngleDeg',
@@ -21155,277 +21532,7 @@ module.exports = {
   Line: Line
 };
 
-},{}],137:[function(require,module,exports){
-'use strict';
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var GeneSet = require('./gene').GeneSet;
-var randomInt = require('./gene').randomInt;
-var Point = require('./math2d').Point;
-var Line = require('./math2d').Line;
-var SColor = require('./colors').SColor;
-
-var MAX_DEPTH = 4;
-
-var PLANT_GENES = {
-  general: {
-    hasRandomness: ["int", 0, 1],
-    structure: ["int", 0, 1]
-  },
-  stem: {
-    thickness: ["intArray", MAX_DEPTH + 1, 1, 10],
-    angle: ["intArray", MAX_DEPTH, 5, 100],
-    counts: ["intArray", MAX_DEPTH, 1, 7],
-    lengths: ["intArray", MAX_DEPTH, 1, 35],
-    branchStyles: ["intArray", MAX_DEPTH, 1, 2],
-    styles: ["intArray", MAX_DEPTH, 1, 10],
-    blurry: ["intArray", MAX_DEPTH, 1, 5],
-    lengthrandomness: ["intArray", MAX_DEPTH, 0, 2],
-    colors: ["colorArray", MAX_DEPTH],
-    strokeColors: ["colorArray", MAX_DEPTH],
-    depth: ["int", 1, MAX_DEPTH]
-  }
-};
-
-var Plant = function () {
-  function Plant(canvas) {
-    var initializeRandom = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
-
-    _classCallCheck(this, Plant);
-
-    this._canvas = canvas;
-    this.genes = new GeneSet(PLANT_GENES);
-
-    if (initializeRandom) {
-      this.genes.randomize();
-    }
-  }
-
-  _createClass(Plant, [{
-    key: 'draw',
-    value: function draw() {
-      // reset leaf nodes
-      this.leafNodes = [];
-      // return false;
-      this._width = this._canvas.node.clientWidth;
-      this._height = this._canvas.node.clientHeight;
-      this.branches = [];
-
-      this.f = this._canvas.filter(Snap.filter.blur(1, 1));
-      this._canvas.append(this.f);
-      this.drawStem();
-      //this.drawLeaves();
-    }
-  }, {
-    key: 'swap',
-    value: function swap(otherPlant) {
-      var temp = {
-        genes: otherPlant.genes
-      };
-      otherPlant.genes = this.genes;
-      this.genes = temp.genes;
-    }
-  }, {
-    key: 'recurseDrawStems',
-    value: function recurseDrawStems(level, start) {
-      var angle = this.genes.get('stem', 'angle')[level];
-      var thickness = this.genes.get('stem', 'thickness')[level];
-      var thicknessNext = this.genes.get('stem', 'thickness')[level + 1] || 1;
-      var color = this.genes.get('stem', 'colors')[level];
-      var count = this.genes.get('stem', 'counts')[level];
-      var length = this.genes.get('stem', 'lengths')[level];
-      var style = this.genes.get('stem', 'styles')[level];
-      var blurry = this.genes.get('stem', 'blurry')[level];
-      var branchStyle = this.genes.get('stem', 'branchStyles')[level];
-      var startAngle;
-      var branch;
-      var cString;
-
-      if (branchStyle === 1) {
-        angle = 360 / count;
-        startAngle = 0;
-      } else {
-        startAngle = (count - 1) * angle / -2;
-      }
-      var c1 = new SColor().fromRGBAObject(color);
-
-      var g = this._canvas.g(); // group to draw onto
-
-      for (var x = 0; x < count; x++) {
-        branch = new Line(start.p2, start.pointAtAngleDeg(startAngle, length));
-        this.branches.push(branch);
-        startAngle = startAngle + angle;
-
-        cString = c1.toRGBString();
-        if (level + 1 < this.maxDepth) {
-          if (style < 8) {
-            this.drawLine2(g, branch, thickness, thicknessNext, cString);
-          } else if (style === 9) {
-            this.drawLine2(g, branch, thickness, thickness, cString);
-          } else {
-            // do nothing
-          }
-
-          this.recurseDrawStems(level + 1, branch);
-        } else {
-          this.drawLine2(g, branch, thickness, thicknessNext, cString, true);
-          // this.drawDebugLine(branch);
-          this.leafNodes.push(branch);
-        }
-      }
-      if (blurry === 1) {
-        g.attr({
-          'opacity': c1.a,
-          'filter': this.f
-        }); // set the opacity of the group
-      } else {
-          g.attr('opacity', c1.a);
-        }
-    }
-  }, {
-    key: 'drawDebugLine',
-    value: function drawDebugLine(l) {
-      var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
-      line.attr('strokeWidth', 1);
-      line.attr('strokeDasharray', '4, 10');
-      line.attr('stroke', 'rgba(255,0,0,0.5)');
-    }
-  }, {
-    key: 'drawLine2',
-    value: function drawLine2(g, l, thicknessStart, thicknessEnd, color) {
-      var isLeaf = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
-
-      // bottom  left right and point of the quadratic curve
-      var pbl = l.p1.pointAtAngleDeg(l.angleDeg() - 90, thicknessStart / 2);
-      var pbr = l.p1.pointAtAngleDeg(l.angleDeg() + 90, thicknessStart / 2);
-      var pbq = l.p1.pointAtAngleDeg(l.angleDeg() + 180, thicknessStart * 0.7);
-
-      var ptl = l.pointAtAngleDeg(-90, thicknessEnd / 2);
-      var ptr = l.pointAtAngleDeg(90, thicknessEnd / 2);
-      var ptq = l.pointAtAngleDeg(0, thicknessEnd * 0.7);
-
-      g.add(this._canvas.path('M ' + ptl.svgStr() + ' Q ' + ptq.svgStr() + ', ' + ptr.svgStr() + '\n       L ' + pbr.svgStr() + ' Q ' + pbq.svgStr() + ', ' + pbl.svgStr() + ' L ' + ptl.svgStr()).attr({ fill: color }));
-    }
-  }, {
-    key: 'drawLine3',
-    value: function drawLine3(g, l, thicknessStart, thicknessEnd, color) {
-      var isLeaf = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
-
-      // bottom  left right and point of the quadratic curve
-      var pbl = l.p1.pointAtAngleDeg(l.angleDeg() - 90, thicknessStart / 2);
-      var pbr = l.p1.pointAtAngleDeg(l.angleDeg() + 90, thicknessStart / 2);
-      var pbq = l.p1.pointAtAngleDeg(l.angleDeg() + 180, thicknessStart * 0.7);
-
-      var ptl = l.pointAtAngleDeg(-90, thicknessEnd / 2);
-      var ptr = l.pointAtAngleDeg(90, thicknessEnd / 2);
-      var ptq = l.pointAtAngleDeg(0, thicknessEnd * 0.7);
-
-      var pc = l.pointAtCenter();
-
-      var lineCenterPoint = g.add(this._canvas.path('M ' + ptl.svgStr() + ' Q ' + ptq.svgStr() + ', ' + ptr.svgStr() + '\n       L ' + pbr.svgStr() + ' Q ' + pbq.svgStr() + ', ' + pbl.svgStr() + ' L ' + ptl.svgStr())).attr({ fill: color });
-    }
-  }, {
-    key: 'drawLine',
-    value: function drawLine(g, l, thicknessStart, thicknessEnd, color) {
-      var isLeaf = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
-
-      // var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
-      //line.attr('stroke', 'red');
-      // ptl    -   ptr
-      //       | |
-      //       | |
-      //      /   \
-      //      |   |
-      // pbr  |___| pbl
-
-      var pbl = l.p1.pointAtAngleDeg(l.angleDeg() - 90, thicknessStart / 2);
-      var pbr = l.p1.pointAtAngleDeg(l.angleDeg() + 90, thicknessStart / 2);
-      var ptl = l.pointAtAngleDeg(-90, thicknessEnd / 2);
-      var ptr = l.pointAtAngleDeg(90, thicknessEnd / 2);
-
-      g.add(this._canvas.polygon(pbl.x, pbl.y, pbr.x, pbr.y, ptr.x, ptr.y, ptl.x, ptl.y).attr({ fill: color }));
-
-      g.add(this._canvas.circle(l.p1.x, l.p1.y, thicknessStart / 2).attr({ fill: color }));
-
-      if (isLeaf) {
-        g.add(this._canvas.circle(l.p2.x, l.p2.y, thicknessEnd / 2).attr({ fill: color }));
-      }
-    }
-  }, {
-    key: 'drawStem',
-    value: function drawStem() {
-      this.root = new Line(new Point(this._width / 2, this._height), new Point(this._width / 2, this._height / 2));
-      this.maxDepth = this.genes.get('stem', 'depth');
-      this.recurseDrawStems(0, this.root);
-    }
-  }, {
-    key: 'drawLeaf',
-    value: function drawLeaf(point, color, color2, strokeColor) {
-      var leafSize = this.genes.get('leaf', 'size');
-      var leafStyle = this.genes.get('leaf', 'style');
-
-      var leaf;
-      switch (leafStyle) {
-        case 0:
-          leaf = this._canvas.circle(point.p2.x, point.p2.y, leafSize);
-          leaf.attr('fill', color);
-          leaf.attr('stroke', strokeColor);
-          break;
-        case 1:
-          var smallPt = point.pointAtAngleDeg(180, leafSize);
-          leaf = this._canvas.circle(point.p2.x, point.p2.y, leafSize / 0.6);
-          leaf.attr('fill', color);
-          var leaf2 = this._canvas.circle(smallPt.x, smallPt.y, leafSize / 0.6);
-          leaf2.attr('fill', color2);
-          break;
-        default:
-          leaf = this._canvas.circle(point.p2.x, point.p2.y, leafSize);
-          leaf.attr('fill', color);
-      }
-    }
-  }, {
-    key: 'drawLeaves',
-    value: function drawLeaves() {
-      //return;
-      var colors = this.genes.get('leaf', 'colors');
-      var leafStroke = this.genes.get('leaf', 'strokes')[0];
-      var c1 = new SColor(colors[0].r, colors[0].g, colors[0].b, colors[0].a);
-
-      var c2 = new SColor(colors[1].r, colors[1].g, colors[1].b, colors[1].a);
-
-      var style = this.genes.get('leaf', 'colorstyle');
-      var colorArray = c1.scaleToColor(c2, this.leafNodes.length);
-      //console.log('style', style);
-      if (style === 1) {
-        colorArray = _.shuffle(colorArray);
-      }
-      // sort by x or sort by x
-      if (style === 2 || style === 3) {
-        this.leafNodes = _.sortBy(this.leafNodes, ['x']);
-        if (style === 3) {
-          this.leafNodes = _.reverse(this.leafNodes);
-        }
-      }
-
-      for (var i = 0; i < this.leafNodes.length; i++) {
-        if (style < 4) {
-          this.drawLeaf(this.leafNodes[i], this.colorToRgbaString(colorArray[i]), this.colorToRgbaString(colors[1]), this.colorToRgbaString(leafStroke));
-        } else {
-          this.drawLeaf(this.leafNodes[i], this.colorToRgbaString(colors[0]), this.colorToRgbaString(colors[1]), this.colorToRgbaString(leafStroke));
-        }
-      }
-    }
-  }]);
-
-  return Plant;
-}();
-
-module.exports = Plant;
-
-},{"./colors":134,"./gene":135,"./math2d":136}],138:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 'use strict';
 
 var seedrandom = require('../vendor/seedrandom.min');

@@ -1,14 +1,14 @@
-.plant-container {
+.drawing-container {
     box-sizing: border-box;
     height: 200px;
     background-color: white;
 }
 
-.plant-container : hover{
+.drawing-container : hover{
     border: 1px solid #efefef;
 }
 
-.plant-container.selected{
+.drawing-container.selected{
     box-sizing: border-box;
     height: 200px;
     border: 1px solid red;
@@ -16,7 +16,7 @@
 }
 
 
-.plant-container svg{
+.drawing-container svg{
     width: 100%;
     height: 100%;
 }

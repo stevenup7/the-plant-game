@@ -4,6 +4,10 @@
   "description": "recipe site for easy to read presentation ",
   "main": "app.js",
   "watch": {
+    "buildTest": [
+      "src/*.js",
+      "test/manual/src/*.js"
+    ],
     "build": [
       "src/*.js"
     ]
@@ -11,6 +15,10 @@
   "scripts": {
     "bwfy": "browserify -t [babelify --presets[es2015]] src/app.js -o ../server/dist/js/app.js",
     "build": "npm -s run lint && npm -s run bwfy && cp vendor/* ../server/dist/js/",
+
+    "bwfyTest": "browserify -t [babelify --presets[es2015]] test/manual/src/app.js -o test/manual/js/app.js",
+    "buildTest": "npm -s run bwfyTest && cp vendor/* test/manual/js/",
+
     "lint": "clear && ./node_modules/.bin/jshint ./src/*.js || true",
     "test": "karma start test/karma.conf.js",
     "serve": "cd ../server/dist && python -m SimpleHTTPServer 8000",

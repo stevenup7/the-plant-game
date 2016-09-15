@@ -21,7 +21,7 @@ module.exports = function(config) {
     files: [
       '../vendor/lodash.min.js',
       // '*-spec.js'
-      'math2d-spec.js'
+      'svgutils-spec.js'
     ],
 
 

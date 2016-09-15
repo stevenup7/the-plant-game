@@ -3,15 +3,20 @@ var randomInt = require('./gene').randomInt;
 var Point     = require('./math2d').Point;
 var Line      = require('./math2d').Line;
 var SColor    = require('./colors').SColor;
+var SVGUtils  = require('./svgutils');
 
-var MAX_DEPTH = 4;
 var DRAW_DEBUG = false;
-var NUM_ITERATIONS = 3;
 
 var FACE_GENES = {
   general: {
     hasRandomness:    ["int",  0,    1],
     structure:        ["int",  0,    1]
+  },
+  drawing: {
+    hasJitter:        ["int",  0,    1],
+    jitterIterations: ["int",  1,    5],
+    jitterLength:     ["int",  5,    15],
+    jitterSize:       ["int",  1,    3]
   },
   face: {
     width:            ["int", 20,   90],
@@ -25,7 +30,9 @@ var FACE_GENES = {
   },
   eyebrows: {
     tilt:            ["int", -10, 10],
-    width:           ["int", 20, 60]
+    width:           ["int", 20, 60],
+    up:              ["intArray", 3, -10, 10],
+    center:          ["int", 0, 100]
   },
   nose: {
     style:           ["int",   0,    4],
@@ -45,6 +52,10 @@ var lineColor = '#333';
 class Face {
   constructor (canvas, initializeRandom = true) {
     this._canvas = canvas;
+    this.svg = new SVGUtils();
+    this.svg._canvas = this._canvas;
+    this.svg.stroke = lineColor;
+
     this.genes = new GeneSet(FACE_GENES);
     if (initializeRandom) {
       this.genes.randomize();
@@ -73,6 +84,18 @@ class Face {
       this.drawDebugLine(this.centerLineH);
       this.drawDebugLine(this.centerLineV);
     }
+    var hasJitter     = (this.genes.get('drawing',     'hasJitter') === 1);
+    var jitterIterations  = this.genes.get('drawing',     'jitterIterations');
+    var jitterLength  = this.genes.get('drawing',     'jitterLength');
+    var jitterSize    = this.genes.get('drawing',     'jitterSize');
+
+    if (hasJitter) {
+      this.svg.num_iterations = jitterIterations;
+      this.svg.setJitter(jitterLength, jitterSize);
+    } else {
+      this.svg.num_iterations = 2;
+      this.svg.setJitter(false);
+    }
 
     this.faceBorder();
     this.eyes();
@@ -99,8 +122,8 @@ class Face {
     var top = new Point(c.x, c.y - height / 2);
     var bottomR =  new Point(c.x + width / 2, c.y + height / 2);
     var bottomL =  new Point(c.x - width / 2, c.y + height / 2);
-    this.drawJitterLine(top, bottomR);
-    this.drawJitterLine(bottomR, bottomL);
+    this.svg.drawLine(top, bottomR);
+    this.svg.drawLine(bottomR, bottomL);
   }
 
   eyes () {
@@ -108,8 +131,10 @@ class Face {
     var separtion     = this.genes.get('eyes',     'separtion') / 100 *  (this._width/2);
     var style         = this.genes.get('eyes',     'style') / 100 *  (this._width/2);
     var size          = this.genes.get('eyes',     'size');
-    var eyebrowTilt   = this.genes.get('eyebrows', 'eyebrowTilt');
-    var eyebrowWidth  = this.genes.get('eyebrows', 'eyebrowWidth');
+    var eyebrowTilt   = this.genes.get('eyebrows', 'tilt');
+    var eyebrowWidth  = this.genes.get('eyebrows', 'width');
+    var eyebrowsUp      = this.genes.get('eyebrows', 'up');
+    var eyebrowsCenter  = this.genes.get('eyebrows', 'center') / 100 * eyebrowWidth;;
 
     var c = this.center;
     var cl = new Point(c.x - separtion, c.y);
@@ -131,22 +156,34 @@ class Face {
 
     if (drawOuter) {
       if (style === 1) {
-        // this.drawOval(cl, eyeHeight, eyeWidth , eyeHeight, eyeWidth, lineColor, 'white', -65, 180);
-        // this.drawOval(cr, eyeHeight, eyeWidth , eyeHeight, eyeWidth, lineColor, 'white', -180, 65);
-
-        this.drawJitterOval(cl, eyeHeight, eyeWidth , eyeHeight, eyeWidth, lineColor, 'white', -65, 180);
-        this.drawJitterOval(cr, eyeHeight, eyeWidth , eyeHeight, eyeWidth, lineColor, 'white', -180, 65);
+        this.svg.drawOval(cl, eyeHeight, eyeWidth , eyeHeight, eyeWidth, 'white', -65, 180);
+        this.svg.drawOval(cr, eyeHeight, eyeWidth , eyeHeight, eyeWidth, 'white', -180, 65);
       } else {
-        this.drawJitterOval(cl, eyeHeight, eyeWidth , eyeHeight, eyeWidth, lineColor, 'white');
-        this.drawJitterOval(cr, eyeHeight, eyeWidth , eyeHeight, eyeWidth, lineColor, 'white');
+        this.svg.drawOval(cl, eyeHeight, eyeWidth , eyeHeight, eyeWidth, 'white');
+        this.svg.drawOval(cr, eyeHeight, eyeWidth , eyeHeight, eyeWidth, 'white');
       }
-
     }
 
     if (drawPupils) {
-      this.drawCircle(cl, 2,  lineColor, lineColor);
-      this.drawCircle(cr, 2,  lineColor, lineColor);
+      this.svg.drawOval(cl, 2, 2, 2, 2,  lineColor);
+      this.svg.drawOval(cr, 2, 2, 2, 2,  lineColor);
     }
+
+    // draw Left eyebrow
+    var el1 = new Point(cl.x - (eyebrowWidth/2) , cl.y - eyeHeight * 1.5 - eyebrowsUp[0]);
+    var el2 = new Point(cl.x,                   cl.y - eyeHeight * 1.5 - eyebrowsUp[1]);
+    var el3 = new Point(cl.x + (eyebrowWidth/2) , cl.y - eyeHeight * 1.5 - eyebrowsUp[2]);
+
+    this.svg.drawLine(el1, el2);
+    this.svg.drawLine(el2, el3 );
+
+    var er3 = new Point(cr.x + (eyebrowWidth/2) , cr.y - eyeHeight * 1.5 - eyebrowsUp[0]);
+    var er2 = new Point(cr.x,                     cr.y - eyeHeight * 1.5 - eyebrowsUp[1]);
+    var er1 = new Point(cr.x - (eyebrowWidth/2) , cr.y - eyeHeight * 1.5 - eyebrowsUp[2]);
+
+    this.svg.drawLine(er1, er2);
+    this.svg.drawLine(er2, er3 );
+
 
   }
 
@@ -163,9 +200,10 @@ class Face {
     var mRight = new Point(c.x + mouthWidth, c.y + mouthHeight);
     var mCenter = new Point(c.x - mouthWidth + mouthCenter, c.y + mouthHeight + mouthUp);
     //this.drawLine(cl, cr, 'blue');
-    this.drawJitterLine(mLeft, mCenter, 'red');
-    this.drawJitterLine(mCenter, mRight, 'red');
-
+    this.svg.stroke = 'red';
+    this.svg.drawLine(mLeft, mCenter);
+    this.svg.drawLine(mCenter, mRight);
+    this.svg.stroke = lineColor;
   }
 
   faceBorder () {
@@ -173,145 +211,9 @@ class Face {
     var heightTop    = this.genes.get('face', 'heightTop') / 100 * (this._height/2);
     var heightBottom = this.genes.get('face', 'heightBottom') / 100 * (this._height/2);
     var c = this.center;
-    this.drawJitterOval(c, heightTop, width, heightBottom, width, lineColor, '#FDEDD6');
+    this.svg.drawOval(c, heightTop, width, heightBottom, width, '#FDEDD6');
   }
 
-  drawJitterLine (p1, p2, color=lineColor) {
-    var len = p1.distanceTo(p2);
-    var steps = Math.floor(len / 10);
-
-    // todo jitter on this
-    if (steps === 0) {
-      return false;
-    }
-
-    var pStart;
-    var pEnd;
-    var j= [-0.5, 0.5];
-    // var j= [0, 0];
-
-    var dx = (p2.x - p1.x) / steps;
-    var dy = (p2.y - p1.y) / steps;
-
-
-    for(var x = 0; x < NUM_ITERATIONS; x++) {
-      pStart = p1.copy();
-      for(var i = 0; i <= steps ; i++) {
-        pEnd = new Point(
-          p1.x + dx * i + randomInt(j[0], j[1]) ,
-          p1.y + dy * i + randomInt(j[0], j[1])
-        );
-        if ( isNaN(pEnd.x)) {
-          debugger;
-          console.log(pEnd.toString());
-        }
-
-        this.drawLine(pStart, pEnd, color);
-        pStart = pEnd;
-      }
-    }
-    //this.drawLine(pStart, p2, color);
-    //this.drawLine(pStart, p2, color);
-    return true;
-  }
-
-  drawLine (p1, p2, color=lineColor) {
-    var line = this._canvas.line(p1.x, p1.y, p2.x, p2.y).attr({
-      stroke: color
-    });
-  }
-
-  drawCircle (p, radius, stroke = lineColor, bg = 'white') {
-    var c = this._canvas.circle(p.x, p.y, radius);
-    c.attr('strokeWidth', 1);
-    c.attr('fill', bg);
-    //line.attr('strokeDasharray', '4, 10');
-    c.attr('stroke', stroke);
-    return c;
-  }
-
-  getFaceRadius (ang, width, height, jitter=2) {
-    var rad;
-    var ratio;
-    ang = (ang - 90) * (Math.PI/180);
-    rad = (width * height) /
-      Math.sqrt(
-        (width * width * (Math.sin(ang) * Math.sin(ang))) +
-          (height * height * (Math.cos(ang) * Math.cos(ang)))
-      );
-    return rad + randomInt(jitter * -1, jitter);
-  }
-
-  drawJitterOval (c, rtop, rleft, rbottom, rrigth, col, bgcol = 'none', startAngle=0, finishAngle=360) {
-    var pstart;
-    var pend;
-    var avgRadius = (rtop + rleft + rbottom + rrigth) / 4;
-    var angleStep = 90;
-    var jitter = 1;
-    var pts;
-
-    if (avgRadius < 30)  {
-      angleStep = 20;
-      jitter = 0.5;
-    } else {
-      angleStep = 5;
-    }
-
-    for(var x = 0; x < NUM_ITERATIONS; x++) {
-      pts = [];
-
-      var numSteps = (finishAngle - startAngle) / angleStep;
-      pstart = c.pointAtAngleDeg(startAngle, this.getFaceRadius(startAngle, rrigth, rtop, jitter));
-      var ang = startAngle;
-      //for(var ang = startAngle + angleStep; ang <= finishAngle; ang += angleStep) {
-      for(var i = 1 ; i <= numSteps; i++) {
-        ang = startAngle + angleStep * i;
-
-        if (ang < 90) {
-          pend = c.pointAtAngleDeg(ang, this.getFaceRadius(ang, rrigth, rtop, jitter));
-        } else if (ang < 180){
-          pend = c.pointAtAngleDeg(ang, this.getFaceRadius(ang, rrigth, rbottom, jitter));
-        }  else if (ang < 270){
-          pend = c.pointAtAngleDeg(ang, this.getFaceRadius(ang, rleft, rbottom, jitter));
-        } else {
-          pend = c.pointAtAngleDeg(ang, this.getFaceRadius(ang, rleft, rtop, jitter));
-        }
-        pts.push(pstart.toArray());
-        this._canvas.line(pstart.x, pstart.y, pend.x, pend.y).attr({
-          stroke: col,
-          fill: '#efefef'
-        });
-        pstart = pend;
-      }
-      pts.push(pend.toArray());
-      if (x === 0) {
-        this.renderArray(pts, true, lineColor, bgcol);
-      } else {
-        this.renderArray(pts, true, lineColor);
-      }
-    }
-
-    // this.drawDebugPoint(c.pointAtAngleDeg(-90,  rleft),   'blue');
-    // this.drawDebugPoint(c.pointAtAngleDeg(  0,  rtop),    'green');
-    // this.drawDebugPoint(c.pointAtAngleDeg( 90,  rrigth),  'red');
-    // this.drawDebugPoint(c.pointAtAngleDeg(180,  rbottom), 'purple');
-
-  }
-
-  renderArray (pts, closed=true, stroke='red', fill='none') {
-    var svgString = 'M ' + pts[0][0] + ' ' + pts[0][1];
-    for(var i = 1; i < pts.length; i++) {
-      svgString +=  ' L ' + pts[i][0] + ' ' + pts[i][1];
-    }
-    if (closed) {
-      svgString += ' z';
-    }
-    return this._canvas.path(svgString).attr({
-      fill: fill,
-      stroke: stroke,
-      strokeWidth: 1
-    });
-  }
 
   drawDebugLine (l) {
     var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);

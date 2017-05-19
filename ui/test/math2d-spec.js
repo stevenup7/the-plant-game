@@ -28,7 +28,7 @@ describe('Math2d', function () {
 
 
 
-  it('to give the proper points for a point at angle' , function () {
+  it('Gives the proper points for a point at angle' , function () {
     var pOrig = new Point(0,0);
 
     var angles = [0, 0.5 *Math.PI, Math.PI, 1.5 *Math.PI, 2 * Math.PI];
@@ -61,7 +61,7 @@ describe('Math2d', function () {
     var l = new Line(new Point(0,0), new Point(0, -1)); // line pointing up
     var p = l.pointAtAngleDeg(0, 1);
 
-    expect(p.x).toBe(0);
+    expect(p.x).toBe(10000);
     expect(p.y).toBe(-2);
 
     l = new Line(new Point(0,0), new Point(0, -1)); // line pointing up

@@ -40,6 +40,7 @@ class Plant {
   }
 
   draw () {
+    this._canvas.clear();
     // reset leaf nodes
     this.leafNodes = [];
     // return false;
@@ -49,6 +50,7 @@ class Plant {
 
     this.f = this._canvas.filter(Snap.filter.blur(1, 1));
     this._canvas.append(this.f);
+
     this.drawStem();
     //this.drawLeaves();
   }

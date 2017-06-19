@@ -10,7 +10,7 @@
   },
   "scripts": {
     "bwfy": "browserify -t [babelify --presets[es2015]] src/app.js -o ../server/dist/js/app.js",
-    "build": "npm -s run lint && npm -s run bwfy && cp vendor/* ../server/dist/js/",
+    "build": "npm -s run lint && npm -s run bwfy && cp vendor/* ../server/dist/js/ && cp node_modules/vue/dist/vue.js ../server/dist/js/",
     "lint": "clear && ./node_modules/.bin/jshint ./src/*.js || true",
     "test": "karma start test/karma.conf.js",
     "serve": "cd ../server/dist && python -m SimpleHTTPServer 8000",
@@ -35,5 +35,8 @@
     "npm-watch": "^0.1.1",
     "phantomjs-prebuilt": "^2.1.4",
     "watchify": "^3.7.0"
+  },
+  "dependencies": {
+    "vue": "^2.3.4"
   }
 }

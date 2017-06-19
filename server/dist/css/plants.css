@@ -1,3 +1,24 @@
+.header h1 {
+    margin: 0.2em 0;
+    font-size: 3em;
+    font-weight: 300;
+}
+.header h2 {
+    font-weight: 300;
+    color: #ccc;
+    padding: 0;
+    margin-top: 0;
+}
+
+
+.drawing-container {
+    box-sizing: border-box;
+    background-color: white;
+}
+
+.is-over {
+    background-color: #dfdfdf;
+}
 .plant-container {
     box-sizing: border-box;
     height: 200px;
@@ -11,7 +32,6 @@
 .plant-container.selected{
     box-sizing: border-box;
     height: 200px;
-    border: 1px solid red;
     background-color: white;
 }
 
@@ -33,4 +53,55 @@ svg line {
 .show-hide a.hide {
     text-decoration: none;
     color: #999;
+}
+
+svg {
+    opacity: 0.1;
+}
+.game-menu {
+    padding: 5px;
+    background-color: #ccc;
+    color: white;
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 100;
+}
+ul#game-list {
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+}
+
+#game-list li {
+    box-sizing: border-box;
+    border: 1px solid #efefef;
+}
+.object-menu {
+    background-color: #efefef;
+}
+
+
+.button-success,
+.button-error,
+.button-warning,
+.button-secondary {
+    color: white;
+    border-radius: 4px;
+}
+
+.button-success {
+    background: rgb(28, 184, 65); /* this is a green */
+}
+
+.button-error {
+    background: rgb(202, 60, 60); /* this is a maroon */
+}
+
+.button-warning {
+    background: rgb(223, 117, 20); /* this is an orange */
+}
+
+.button-secondary {
+    background: rgb(66, 184, 221); /* this is a light blue */
 }

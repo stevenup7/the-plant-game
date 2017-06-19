@@ -20277,19 +20277,182 @@ exports.createContext = Script.createContext = function (context) {
 },{"indexof":90}],133:[function(require,module,exports){
 'use strict';
 
-var Plant = require('./plant');
+var DrawingObject = require('./plant');
+var Vue = window.Vue;
 
-var CONSTS = {
-  NUM_PLANTS: 25,
-  NUM_PARENTS: 15
+Vue.component('drawing-object', {
+  props: ['object'],
+  data: function data() {
+    return {
+      isOver: false,
+      drawing: null,
+      locked: false,
+      message: ''
+    };
+  },
+  template: '\n    <li class="pure-u-1-2 pure-u-md-1-4 pure-u-lg-1-6" v-bind:id="\'o\' + object.id"\n        v-bind:class="{ \'is-over\': isOver }"\n      >\n      <div class="object-menu">\n          <input id="lock" type="checkbox" v-model="locked">\n          {{message}}\n      </div>\n      <div draggable="true"\n          @drop="drop"\n          @dragstart="dragStart"\n          @dragenter="dragEnter"\n          @dragexit="dragExit"\n          @dragleave="dragLeave"\n          @dragover="dragOver"\n          v-bind:id="\'oc\' + object.id">\n      </div>\n    </li>\n    ',
+  watch: {
+    locked: function locked() {
+      this.object.locked = this.locked;
+    }
+  },
+  mounted: function mounted() {
+    var plantCanvas = document.querySelector('#oc' + this.object.id);
+    var width = plantCanvas.clientWidth;
+    this.half = width / 2;
+    var svg = new Snap(width, width);
+    svg.prependTo(plantCanvas);
+    this.object.drawing = new DrawingObject(svg);
+    this.object.locked = this.locked;
+    this.object.drawing.draw();
+  },
+  methods: {
+    dragStart: function dragStart(event) {
+      event.dataTransfer.setData("text/plain", this.object.id);
+    },
+    drop: function drop(event) {
+      event.preventDefault();
+      var draggingId = parseInt(event.dataTransfer.getData("text"), 10);
+      this.$parent.drawingDrop({
+        target: this.object.id,
+        dragged: draggingId,
+        action: this.message
+      });
+      this.message = '';
+      this.isOver = false;
+    },
+    dragEnter: function dragEnter(event) {
+      this.isOver = true;
+    },
+    dragExit: function dragExit(event) {
+      //console.log('exit');
+    },
+    dragLeave: function dragLeave(event) {
+      this.message = '';
+      this.isOver = false;
+    },
+    dragOver: function dragOver(event) {
+      var p = findPos(this.$el);
+      // console.log('dragover', event.layerX, this.half);
+      if (event.clientX - p.x > this.half) {
+        this.message = 'swap';
+      } else {
+        this.message = 'breed';
+      }
+      event.preventDefault();
+    }
+  }
+});
+
+var app = new Vue({
+  el: '#game',
+  template: '\n  <div>\n     <div class="game-menu">\n       <button class="pure-button button-warning" v-on:click="random">random</button>\n       <button class="pure-button button-success" v-on:click="save">save</button>\n       <button class="pure-button button-secondary" v-on:click="load">load</button>\n     </div>\n     <ul id="game-list" class="pure-g">\n      <drawing-object\n         v-for="drawingObject in drawingObjects"\n         v-bind:key="drawingObject.id"\n         v-bind:object="drawingObject">\n      </drawing-object>\n     </ul>\n  </div>\n  ',
+  data: {
+    drawingObjects: []
+  },
+  created: function created() {
+    for (var i = 0; i < 24; i++) {
+      //console.log('pushing');
+      this.drawingObjects.push({ id: i });
+    }
+  },
+  methods: {
+    drawingDrop: function drawingDrop(event) {
+      var drag = this.getDrawingObjectBy(event.target);
+      var drop = this.getDrawingObjectBy(event.dragged);
+
+      if (event.action === 'swap') {
+        this.swap(drag, drop);
+      } else {
+        this.breed(drag, drop);
+      }
+    },
+    getDrawingObjectBy: function getDrawingObjectBy(id) {
+      var found = null;
+      this.drawingObjects.forEach(function (o) {
+        if (o.id === id) {
+          found = o;
+        }
+      });
+      return found.drawing;
+    },
+    random: function random() {
+      this.drawingObjects.forEach(function (drawing) {
+        if (drawing.locked !== true) {
+          drawing.drawing.genes.randomize();
+          drawing.drawing.draw();
+        }
+      });
+    },
+    breed: function breed(drag, drop) {
+      var mutation = arguments.length <= 2 || arguments[2] === undefined ? 0.01 : arguments[2];
+
+      var dragGenes = drag.genes.clone();
+      var dropGenes = drop.genes.clone();
+
+      this.drawingObjects.forEach(function (drawing) {
+        if (drawing.locked !== true) {
+          drawing.drawing.genes = dragGenes.breed(dropGenes, 0.1, mutation);
+          drawing.drawing.draw();
+        }
+      });
+    },
+    swap: function swap(drag, drop) {
+      drag.swap(drop);
+      drop.draw();
+      drag.draw();
+    },
+    save: function save() {
+      var saveData = {};
+      this.drawingObjects.forEach(function (drawing) {
+        saveData['drawing' + drawing.id] = drawing.drawing.genes.toJSON();
+      });
+      localStorage.setItem('plants', JSON.stringify(saveData));
+      //console.log(saveData);
+    },
+    load: function load() {
+      var _this = this;
+
+      var data = JSON.parse(localStorage.getItem('plants'));
+      console.log('load', data);
+      _.forEach(data, function (v, k) {
+        var objectId = parseInt(k.replace('drawing', ''), 10);
+        _this.drawingObjects[objectId].drawing.genes.fromJSON(v);
+        _this.drawingObjects[objectId].drawing.draw();
+      });
+    }
+  }
+});
+
+document.body.onkeyup = function (e) {
+  if (e.keyCode === 82) {
+    // r
+    app.random();
+  }
 };
 
+function findPos(obj) {
+  // ewk
+  // https://stackoverflow.com/questions/5085689/tracking-mouse-position-in-canvas-when-no-surrounding-element-exists
+  var curleft = 0,
+      curtop = 0;
+  if (obj.offsetParent) {
+    do {
+      curleft += obj.offsetLeft;
+      curtop += obj.offsetTop;
+    } while (obj = obj.offsetParent);
+    return { x: curleft, y: curtop };
+  }
+  return undefined;
+}
+
+/*
 var plants = [];
 var parents = [];
 var selectedParent = 0;
 var xoverChance = 0.1;
 
-function init() {
+function init () {
   var filter = Snap.filter.grayscale(0.5);
   var canvasContainer = document.getElementById('main-canvas');
   var parentContainer = document.getElementById('parent-canvas');
@@ -20299,8 +20462,8 @@ function init() {
   var data = getCurrData();
   var saveSet;
   for (saveSet in data) {
-    if (data.hasOwnProperty(saveSet)) {
-      $('select').append($('<option>', { value: saveSet, text: saveSet }));
+    if(data.hasOwnProperty(saveSet)) {
+      $('select').append($('<option>', {value:saveSet, text:saveSet}));
     }
   }
 
@@ -20337,12 +20500,13 @@ $('#show-about').click(function () {
 $('#edit').click(function () {
   showPane('edit');
   var stringData = getPlantById('parent-1').genes.toJSON();
-  stringData = JSON.stringify(JSON.parse(stringData, stringData), null, 2);
-  stringData = stringData.replace(/\s*([A-Za-z]*,)[\s]/gi, '$1');
-  stringData = stringData.replace(/(\[)[\s]/gi, '$1');
-  stringData = stringData.replace(/\s*\]\s*,/gi, '],\r');
+  // stringData = JSON.stringify(JSON.parse(stringData, stringData), null, 2);
+  // stringData = stringData.replace(/\s*([A-Za-z]*,)[\s]/gi, '$1');
+  // stringData = stringData.replace(/(\[)[\s]/gi, '$1');
+  // stringData = stringData.replace(/\s*\]\s*,/gi, '],\r');
   $('#edit-data').val(stringData);
 });
+
 
 $('#save-edit').click(function () {
   var storeString = $('#edit-data').val();
@@ -20351,7 +20515,7 @@ $('#save-edit').click(function () {
   showPane('main');
 });
 
-function getCurrData() {
+function getCurrData () {
   var data = window.localStorage.getItem('plants');
   if (data === null) {
     return {};
@@ -20360,13 +20524,13 @@ function getCurrData() {
   }
 }
 
-function createPlantSet(containerEl, numPlants, elementIdPrefix, holdingArray) {
+function createPlantSet (containerEl, numPlants, elementIdPrefix, holdingArray) {
   var plantCanvas;
   var svgEl;
   var width;
   var height;
 
-  for (var i = 0; i < numPlants; i++) {
+  for (var i=0; i<numPlants; i++) {
     plantCanvas = document.createElement('div');
     plantCanvas.setAttribute('id', elementIdPrefix + i);
     plantCanvas.className = 'plant-container pure-u-1-5';
@@ -20385,10 +20549,10 @@ function createPlantSet(containerEl, numPlants, elementIdPrefix, holdingArray) {
   }
 }
 
-function getPlantById(id) {
+function getPlantById (id) {
   var stripString = 'plant-';
   var srcArray = plants;
-  if (id.indexOf('parent') === 0) {
+  if(id.indexOf('parent') === 0) {
     stripString = 'parent-';
     srcArray = parents;
   }
@@ -20400,7 +20564,7 @@ function getPlantById(id) {
 
 function plantDrag(ev) {
   //console.log(arguments);
-  ev.dataTransfer.dropEffect = 'move';
+  ev.dataTransfer.dropEffect ='move';
   ev.dataTransfer.setData("text/plain", ev.target.id);
 }
 
@@ -20426,13 +20590,11 @@ function plantDrop(ev) {
   }
 }
 
-function breed(firstId, secondId) {
-  var mutation = arguments.length <= 2 || arguments[2] === undefined ? 0.01 : arguments[2];
-
+function breed(firstId, secondId, mutation=0.01) {
   var plant1Genes = getPlantById(firstId).genes.clone();
   var plant2Genes = getPlantById(secondId).genes.clone();
 
-  for (var i = 0; i < CONSTS.NUM_PLANTS; i++) {
+  for (var i=0; i<CONSTS.NUM_PLANTS; i++) {
     plants[i].genes = plant1Genes.breed(plant2Genes, xoverChance, mutation);
     // clear out the svg so can redraw
     drawPlant(i);
@@ -20450,49 +20612,49 @@ function swap(firstId, secondId) {
   plant2.draw();
 }
 
-function draw() {
+function draw () {
   $('svg *').remove();
 
-  for (var i = 0; i < CONSTS.NUM_PLANTS; i++) {
+  for (var i=0; i<CONSTS.NUM_PLANTS; i++) {
     plants[i].draw();
   }
-  for (i = 0; i < CONSTS.NUM_PARENTS; i++) {
+  for (i=0; i< CONSTS.NUM_PARENTS; i++) {
     parents[i].draw();
   }
 }
 
-function drawPlant(i) {
+function drawPlant (i) {
   $('#plant-' + i + ' svg *').remove();
   plants[i].draw();
 }
 
-function drawParent(i) {
+function drawParent (i) {
   $('#parent-' + i + ' svg *').remove();
   parents[i].draw();
 }
 
-$(document).ready(function () {
+$(document).ready(() => {
   init();
   draw();
   console.log('ready');
 
   function randomize() {
-    for (var i = 0; i < CONSTS.NUM_PLANTS; i++) {
+    for (var i=0; i<CONSTS.NUM_PLANTS; i++) {
       plants[i].genes.randomize();
       // clear out the svg so can redraw
       drawPlant(i);
     }
   }
 
-  $('#randomize').click(function (event) {
+  $('#randomize').click(function(event) {
     randomize();
   });
 
-  $('#breed').click(function (event) {
+  $('#breed').click(function(event) {
     breed('parent-0', 'parent-1');
   });
 
-  $('#breedHighMutation').click(function (event) {
+  $('#breedHighMutation').click(function(event) {
     breed('parent-0', 'parent-1', 0.1);
   });
 
@@ -20502,20 +20664,20 @@ $(document).ready(function () {
 
   function getSaveSetName() {
     var name = $('#save-set-name').val();
-    if (name === "") {
+    if (name ===  ""){
       name = "default";
     }
     return name;
   }
 
-  $('#save').click(function (event) {
+  $('#save').click(function(event) {
     event.preventDefault();
     event.stopPropagation();
     var currData = getCurrData();
     var saveName = getSaveSetName();
 
     var storeObj = {};
-    for (var i = 0; i < parents.length; i++) {
+    for(var i = 0; i < parents.length; i++) {
       storeObj['parent' + i] = parents[i].genes.toJSON();
     }
     currData[saveName] = storeObj;
@@ -20523,14 +20685,14 @@ $(document).ready(function () {
     window.localStorage.setItem('plants', storeString);
   });
 
-  $('#load').click(function (event) {
+  $('#load').click(function(event) {
     event.preventDefault();
     event.stopPropagation();
     var currData = getCurrData();
     var saveName = getSaveSetName();
     var data = currData[saveName];
 
-    for (var i = 0; i < parents.length; i++) {
+    for(var i = 0; i < parents.length; i++) {
       parents[i].genes.fromJSON(data['parent' + i]);
     }
     draw();
@@ -20539,20 +20701,23 @@ $(document).ready(function () {
   $(document).keyup(function (ev) {
     var char = String.fromCharCode(ev.which);
     console.log(char);
-    if (char === 'B') {
+    if(char === 'B') {
       breed('parent-0', 'parent-1', 0.01);
     }
-    if (char === 'N') {
+    if(char === 'N') {
       breed('parent-0', 'parent-1', 0.1);
     }
-    if (char === 'M') {
+    if(char === 'M') {
       breed('parent-0', 'parent-1', 0.2);
     }
-    if (char === 'R') {
+    if(char === 'R') {
       randomize();
     }
   });
+
+
 });
+*/
 
 },{"./plant":137}],134:[function(require,module,exports){
 'use strict';
@@ -21009,7 +21174,7 @@ var GeneSet = function () {
       _.each(this._genes, function (gene) {
         strobj.geneValues[gene._name] = gene._values;
       });
-      return JSON.stringify(strobj);
+      return JSON.stringify(strobj, null, '  ');
     }
   }, {
     key: 'fromJSON',
@@ -21206,6 +21371,7 @@ var Plant = function () {
   _createClass(Plant, [{
     key: 'draw',
     value: function draw() {
+      this._canvas.clear();
       // reset leaf nodes
       this.leafNodes = [];
       // return false;
@@ -21215,6 +21381,7 @@ var Plant = function () {
 
       this.f = this._canvas.filter(Snap.filter.blur(1, 1));
       this._canvas.append(this.f);
+
       this.drawStem();
       //this.drawLeaves();
     }

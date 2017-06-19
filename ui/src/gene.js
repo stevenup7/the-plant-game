@@ -240,7 +240,7 @@ class GeneSet {
     _.each(this._genes, (gene) => {
       strobj.geneValues[gene._name] = gene._values;
     });
-    return JSON.stringify(strobj);
+    return JSON.stringify(strobj, null, '  ' );
   }
 
   fromJSON (jsonString) {

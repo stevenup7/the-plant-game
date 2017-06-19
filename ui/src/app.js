@@ -58,10 +58,10 @@ $('#show-about').click(function () {
 $('#edit').click(function () {
   showPane('edit');
   var stringData = getPlantById('parent-1').genes.toJSON();
-  stringData = JSON.stringify(JSON.parse(stringData, stringData), null, 2);
-  stringData = stringData.replace(/\s*([A-Za-z]*,)[\s]/gi, '$1');
-  stringData = stringData.replace(/(\[)[\s]/gi, '$1');
-  stringData = stringData.replace(/\s*\]\s*,/gi, '],\r');
+  // stringData = JSON.stringify(JSON.parse(stringData, stringData), null, 2);
+  // stringData = stringData.replace(/\s*([A-Za-z]*,)[\s]/gi, '$1');
+  // stringData = stringData.replace(/(\[)[\s]/gi, '$1');
+  // stringData = stringData.replace(/\s*\]\s*,/gi, '],\r');
   $('#edit-data').val(stringData);
 });
 

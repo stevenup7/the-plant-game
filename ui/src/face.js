@@ -5,7 +5,8 @@ var Line      = require('./math2d').Line;
 var SColor    = require('./colors').SColor;
 var SVGUtils  = require('./svgutils');
 
-var DRAW_DEBUG = false;
+var DRAW_DEBUG = true;
+
 
 var FACE_GENES = {
   general: {
@@ -63,8 +64,6 @@ class Face {
   }
 
   draw () {
-    // reset leaf nodes
-    // return false;
     //Math.seedrandom("face");
     this._width = this._canvas.node.clientWidth;
     this._height = this._canvas.node.clientHeight;
@@ -81,9 +80,11 @@ class Face {
     );
 
     if (DRAW_DEBUG) {
+      console.log('dbg');
       this.drawDebugLine(this.centerLineH);
       this.drawDebugLine(this.centerLineV);
     }
+
     var hasJitter     = (this.genes.get('drawing',     'hasJitter') === 1);
     var jitterIterations  = this.genes.get('drawing',     'jitterIterations');
     var jitterLength  = this.genes.get('drawing',     'jitterLength');
@@ -211,7 +212,9 @@ class Face {
     var heightTop    = this.genes.get('face', 'heightTop') / 100 * (this._height/2);
     var heightBottom = this.genes.get('face', 'heightBottom') / 100 * (this._height/2);
     var c = this.center;
-    this.svg.drawOval(c, heightTop, width, heightBottom, width, '#FDEDD6');
+    this.svg.drawOval(c, heightTop, width, heightBottom , width, '#e2d3be', false);
+    this.svg.drawOval(c, heightTop, width +5, heightBottom -5, width, '#fdedd6');
+
   }
 
 

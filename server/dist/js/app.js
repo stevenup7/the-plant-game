@@ -20738,7 +20738,7 @@ var Line = require('./math2d').Line;
 var SColor = require('./colors').SColor;
 var SVGUtils = require('./svgutils');
 
-var DRAW_DEBUG = false;
+var DRAW_DEBUG = true;
 
 var FACE_GENES = {
   general: {
@@ -20802,8 +20802,6 @@ var Face = function () {
   _createClass(Face, [{
     key: 'draw',
     value: function draw() {
-      // reset leaf nodes
-      // return false;
       //Math.seedrandom("face");
       this._width = this._canvas.node.clientWidth;
       this._height = this._canvas.node.clientHeight;
@@ -20814,9 +20812,11 @@ var Face = function () {
       this.centerLineV = new Line(new Point(0, this._height / 2), new Point(this._width, this._height / 2));
 
       if (DRAW_DEBUG) {
+        console.log('dbg');
         this.drawDebugLine(this.centerLineH);
         this.drawDebugLine(this.centerLineV);
       }
+
       var hasJitter = this.genes.get('drawing', 'hasJitter') === 1;
       var jitterIterations = this.genes.get('drawing', 'jitterIterations');
       var jitterLength = this.genes.get('drawing', 'jitterLength');
@@ -20946,7 +20946,8 @@ var Face = function () {
       var heightTop = this.genes.get('face', 'heightTop') / 100 * (this._height / 2);
       var heightBottom = this.genes.get('face', 'heightBottom') / 100 * (this._height / 2);
       var c = this.center;
-      this.svg.drawOval(c, heightTop, width, heightBottom, width, '#FDEDD6');
+      this.svg.drawOval(c, heightTop, width, heightBottom, width, '#e2d3be', false);
+      this.svg.drawOval(c, heightTop, width + 5, heightBottom - 5, width, '#fdedd6');
     }
   }, {
     key: 'drawDebugLine',
@@ -21496,6 +21497,7 @@ var SVGUtils = function () {
       var bgcol = arguments.length <= 5 || arguments[5] === undefined ? 'none' : arguments[5];
       var startAngle = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
       var finishAngle = arguments.length <= 7 || arguments[7] === undefined ? 360 : arguments[7];
+      var hasStroke = arguments.length <= 8 || arguments[8] === undefined ? true : arguments[8];
 
       var pstart;
       var pend;
@@ -21517,9 +21519,13 @@ var SVGUtils = function () {
       if (bgcol !== 'none') {
         bgIteration = 1;
       }
-      console.log('steps', numSteps, 'angleStep', angleStep, 'iters', this.num_iterations + bgIteration);
+      //console.log('steps', numSteps, 'angleStep',angleStep, 'iters', this.num_iterations + bgIteration );
 
-      for (var x = 0; x < this.num_iterations + bgIteration; x++) {
+      var numIterations = this.num_iterations;
+      if (hasStroke === false) {
+        numIterations = 1;
+      }
+      for (var x = 0; x < numIterations + bgIteration; x++) {
         pts = [];
         //var numSteps = (finishAngle - startAngle) / angleStep;
         pstart = c.pointAtAngleDeg(startAngle, this.getOvalRadius(startAngle, rrigth, rtop));
@@ -21547,12 +21553,12 @@ var SVGUtils = function () {
         }
 
         if (this._canvas === undefined) {
-          console.log('early exit for no canvas');
+          //console.log('early exit for no canvas');
           return pts;
         }
         // pts.push(pend.toArray());
         if (x === 0 && bgcol !== 'none') {
-          returnLines.push(this.renderArrayLines(pts, closed, bgcol));
+          returnLines.push(this.renderArrayLines(pts, closed, bgcol, hasStroke));
         } else {
           returnLines.push(this.renderArrayLines(pts, closed));
         }
@@ -21564,6 +21570,7 @@ var SVGUtils = function () {
     value: function renderArrayLines(pts) {
       var closed = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
       var fill = arguments.length <= 2 || arguments[2] === undefined ? 'none' : arguments[2];
+      var hasStroke = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
 
       var svgString;
 
@@ -21584,10 +21591,11 @@ var SVGUtils = function () {
       if (closed) {
         svgString += ' z';
       }
-
+      var stroke = hasStroke ? this.stroke : 'none';
+      console.log(stroke, hasStroke);
       return this._canvas.path(svgString).attr({
         fill: fill,
-        stroke: this.stroke,
+        stroke: stroke,
         strokeWidth: this.strokeWidth
       });
     }
@@ -21617,7 +21625,7 @@ var SVGUtils = function () {
           pEnd = new Point(p1.x + dx * i, p1.y + dy * i);
 
           if (isNaN(pEnd.x) || isNaN(pEnd.y)) {
-            console.log(pEnd.toString());
+            //console.log(pEnd.toString());
             throw 'bad calc of pEnd';
           }
           pts.push(pEnd.toArray());

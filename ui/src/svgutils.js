@@ -56,7 +56,8 @@ class SVGUtils {
     return rad;
   }
 
-  drawOval (c, rtop, rleft, rbottom, rrigth, bgcol = 'none', startAngle=0, finishAngle=360) {
+  drawOval (c, rtop, rleft, rbottom, rrigth, bgcol = 'none',
+            startAngle=0, finishAngle=360, hasStroke=true) {
     var pstart;
     var pend;
     var closed = true;
@@ -77,9 +78,13 @@ class SVGUtils {
     if (bgcol !== 'none') {
       bgIteration = 1;
     }
-    console.log('steps', numSteps, 'angleStep',angleStep, 'iters', this.num_iterations + bgIteration );
+    //console.log('steps', numSteps, 'angleStep',angleStep, 'iters', this.num_iterations + bgIteration );
 
-    for(var x = 0; x < this.num_iterations + bgIteration; x++) {
+    var numIterations = this.num_iterations;
+    if (hasStroke === false) {
+      numIterations = 1;
+    }
+    for(var x = 0; x < numIterations + bgIteration; x++) {
       pts = [];
       //var numSteps = (finishAngle - startAngle) / angleStep;
       pstart = c.pointAtAngleDeg(startAngle, this.getOvalRadius(startAngle, rrigth, rtop));
@@ -107,12 +112,12 @@ class SVGUtils {
       }
 
       if (this._canvas === undefined) {
-        console.log('early exit for no canvas');
+        //console.log('early exit for no canvas');
         return pts;
       }
       // pts.push(pend.toArray());
       if (x === 0 && bgcol !== 'none') {
-        returnLines.push(this.renderArrayLines(pts, closed, bgcol));
+        returnLines.push(this.renderArrayLines(pts, closed, bgcol, hasStroke));
       } else {
         returnLines.push(this.renderArrayLines(pts, closed));
       }
@@ -120,7 +125,7 @@ class SVGUtils {
     return returnLines;
   }
 
-  renderArrayLines (pts, closed=true, fill='none') {
+  renderArrayLines (pts, closed=true, fill='none', hasStroke=true) {
     var svgString;
 
     if (this.jitter) {
@@ -144,10 +149,11 @@ class SVGUtils {
     if (closed) {
       svgString += ' z';
     }
-
+    var stroke = (hasStroke) ? this.stroke : 'none';
+    console.log(stroke, hasStroke);
     return this._canvas.path(svgString).attr({
       fill: fill,
-      stroke: this.stroke,
+      stroke: stroke,
       strokeWidth: this.strokeWidth
     });
   }
@@ -180,7 +186,7 @@ class SVGUtils {
         );
 
         if ( isNaN(pEnd.x) || isNaN(pEnd.y)) {
-          console.log(pEnd.toString());
+          //console.log(pEnd.toString());
           throw('bad calc of pEnd');
         }
         pts.push(pEnd.toArray());

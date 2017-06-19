@@ -20291,7 +20291,6 @@ var xoverChance = 0.1;
 
 function init() {
   var filter = Snap.filter.grayscale(0.5);
-  console.log(filter);
   var canvasContainer = document.getElementById('main-canvas');
   var parentContainer = document.getElementById('parent-canvas');
   createPlantSet(parentContainer, CONSTS.NUM_PARENTS, 'parent-', parents);
@@ -20354,7 +20353,7 @@ $('#save-edit').click(function () {
 
 function getCurrData() {
   var data = window.localStorage.getItem('plants');
-  if (data === '') {
+  if (data === null) {
     return {};
   } else {
     return JSON.parse(data);

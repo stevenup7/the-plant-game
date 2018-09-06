@@ -56,7 +56,7 @@ svg line {
 }
 
 svg {
-    opacity: 0.1;
+    nopacity: 0.1;
 }
 .game-menu {
     padding: 5px;

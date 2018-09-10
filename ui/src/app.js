@@ -85,12 +85,16 @@ Vue.component('drawing-object', {
 
 var app = new Vue ({
 	el: '#game',
+	isPreview: false,
 	template: `
 	<div>
 		 <div class="game-menu">
+			 <button class="pure-button button-secondary" v-on:click="breedChecked">Breed Checked</button>
+			 <button class="pure-button button-secondary" v-on:click="preview">Preview</button>
 			 <button class="pure-button button-warning" v-on:click="random">random</button>
-			 <button class="pure-button button-success" v-on:click="save">save</button>
+			 <button class="pure-button button-secondary" v-on:click="save">save</button>
 			 <button class="pure-button button-secondary" v-on:click="load">load</button>
+
 		 </div>
 		 <ul id="game-list" class="pure-g">
 			<drawing-object
@@ -138,7 +142,7 @@ var app = new Vue ({
 				}
 			});
 		},
-		breed: function (drag, drop, mutation=0.01) {
+		breed: function (drag, drop, mutation=0.1) {
 			var dragGenes = drag.genes.clone();
 			var dropGenes = drop.genes.clone();
 
@@ -154,6 +158,26 @@ var app = new Vue ({
 			drop.draw();
 			drag.draw();
 		},
+		breedChecked: function () {
+			var breedSet = [];
+			this.drawingObjects.forEach(function(drawing) {
+				if (drawing.locked) {
+					breedSet.push(drawing);
+				}
+			});
+			alert('todo');
+			//console.log(saveData);
+		},
+		preview: function () {
+			this.isPreview = !this.isPreview;
+			var el = document.getElementById('main-pane');
+			if (this.isPreview) {
+					el.className += 'preview';
+			} else {
+				el.className = '';
+			}
+		},
+
 		save: function () {
 			var saveData = {};
 			this.drawingObjects.forEach(function(drawing) {

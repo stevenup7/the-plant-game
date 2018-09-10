@@ -26,12 +26,26 @@ class BreedableDrawing {
 		this.genes = temp.genes;
 	}
 
-	drawDebugLine (l) {
+	drawDebugLine (l, g, color = 'rgba(255,0,0,0.5)' ) {
+		g = g || this._canvas;
 		var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
 		line.attr('strokeWidth', 1);
-		line.attr('strokeDasharray', '4, 10');
-		line.attr('stroke', 'rgba(255,0,0,0.5)');
+		line.attr('strokeDasharray', '1, 5');
+		line.attr('stroke', color);
 	}
+
+	drawCircle (g, fillColor, strokeColor, strokeWidth, center, diameter) {
+		g.add(
+			this._canvas.circle(center.x, center.y, diameter)
+				.attr({
+					fill: fillColor,
+					stroke: strokeColor,
+					strokeWidth: strokeWidth
+				})
+		);
+
+	}
+
 
 }
 

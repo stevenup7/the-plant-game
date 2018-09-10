@@ -22464,7 +22464,8 @@ Vue.component('drawing-object', {
 
 var app = new Vue({
 	el: '#game',
-	template: '\n\t<div>\n\t\t <div class="game-menu">\n\t\t\t <button class="pure-button button-warning" v-on:click="random">random</button>\n\t\t\t <button class="pure-button button-success" v-on:click="save">save</button>\n\t\t\t <button class="pure-button button-secondary" v-on:click="load">load</button>\n\t\t </div>\n\t\t <ul id="game-list" class="pure-g">\n\t\t\t<drawing-object\n\t\t\t\t v-for="drawingObject in drawingObjects"\n\t\t\t\t v-bind:key="drawingObject.id"\n\t\t\t\t v-bind:object="drawingObject">\n\t\t\t</drawing-object>\n\t\t </ul>\n\t</div>\n\t',
+	isPreview: false,
+	template: '\n\t<div>\n\t\t <div class="game-menu">\n\t\t\t <button class="pure-button button-secondary" v-on:click="breedChecked">Breed Checked</button>\n\t\t\t <button class="pure-button button-secondary" v-on:click="preview">Preview</button>\n\t\t\t <button class="pure-button button-warning" v-on:click="random">random</button>\n\t\t\t <button class="pure-button button-secondary" v-on:click="save">save</button>\n\t\t\t <button class="pure-button button-secondary" v-on:click="load">load</button>\n\n\t\t </div>\n\t\t <ul id="game-list" class="pure-g">\n\t\t\t<drawing-object\n\t\t\t\t v-for="drawingObject in drawingObjects"\n\t\t\t\t v-bind:key="drawingObject.id"\n\t\t\t\t v-bind:object="drawingObject">\n\t\t\t</drawing-object>\n\t\t </ul>\n\t</div>\n\t',
 	data: {
 		drawingObjects: []
 	},
@@ -22503,7 +22504,7 @@ var app = new Vue({
 			});
 		},
 		breed: function breed(drag, drop) {
-			var mutation = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0.01;
+			var mutation = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0.1;
 
 			var dragGenes = drag.genes.clone();
 			var dropGenes = drop.genes.clone();
@@ -22520,6 +22521,26 @@ var app = new Vue({
 			drop.draw();
 			drag.draw();
 		},
+		breedChecked: function breedChecked() {
+			var breedSet = [];
+			this.drawingObjects.forEach(function (drawing) {
+				if (drawing.locked) {
+					breedSet.push(drawing);
+				}
+			});
+			alert('todo');
+			//console.log(saveData);
+		},
+		preview: function preview() {
+			this.isPreview = !this.isPreview;
+			var el = document.getElementById('main-pane');
+			if (this.isPreview) {
+				el.className += 'preview';
+			} else {
+				el.className = '';
+			}
+		},
+
 		save: function save() {
 			var saveData = {};
 			this.drawingObjects.forEach(function (drawing) {
@@ -22607,11 +22628,23 @@ var BreedableDrawing = function () {
 		}
 	}, {
 		key: 'drawDebugLine',
-		value: function drawDebugLine(l) {
+		value: function drawDebugLine(l, g) {
+			var color = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'rgba(255,0,0,0.5)';
+
+			g = g || this._canvas;
 			var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
 			line.attr('strokeWidth', 1);
-			line.attr('strokeDasharray', '4, 10');
-			line.attr('stroke', 'rgba(255,0,0,0.5)');
+			line.attr('strokeDasharray', '1, 5');
+			line.attr('stroke', color);
+		}
+	}, {
+		key: 'drawCircle',
+		value: function drawCircle(g, fillColor, strokeColor, strokeWidth, center, diameter) {
+			g.add(this._canvas.circle(center.x, center.y, diameter).attr({
+				fill: fillColor,
+				stroke: strokeColor,
+				strokeWidth: strokeWidth
+			}));
 		}
 	}]);
 
@@ -22821,16 +22854,17 @@ var FLOWER_GENES = {
 		strokeWidth: ["int", 1, 5]
 	},
 	petals: {
-		size: ["intArray", NUM_PETAL_LAYERS, 1, 55],
 		strokeWidth: ["intArray", NUM_PETAL_LAYERS, 1, 10],
 		angle: ["intArray", NUM_PETAL_LAYERS, 5, 100],
 		count: ["intArray", NUM_PETAL_LAYERS, 1, 15],
-		width: ["intArray", NUM_PETAL_LAYERS, 1, 35],
-		length: ["intArray", NUM_PETAL_LAYERS, 1, 35],
+		width: ["intArray", NUM_PETAL_LAYERS, 1, 90],
+		length: ["intArray", NUM_PETAL_LAYERS, 1, 90],
 		style: ["intArray", NUM_PETAL_LAYERS, 1, 10],
 		blurry: ["intArray", NUM_PETAL_LAYERS, 1, 5],
 		color: ["colorArray", NUM_PETAL_LAYERS],
-		strokeColor: ["colorArray", NUM_PETAL_LAYERS]
+		strokeColor: ["colorArray", NUM_PETAL_LAYERS],
+		isAngleOffset: ["intArray", NUM_PETAL_LAYERS, 0, 1],
+		centerOffSet: ["intArray", NUM_PETAL_LAYERS, 0, 50]
 	}
 };
 
@@ -22850,13 +22884,27 @@ var Flower = function (_BreedableDrawing) {
 		value: function draw() {
 			this._init_draw();
 			this.center = new Point(this._width / 2, this._height / 2);
-			var petalGroup = this._canvas.g(); // group to draw onto
-			this.drawPetals(petalGroup, 0);
 
-			this.drawPetals(petalGroup, 1);
+			var petalGroup1 = this._canvas.g(); // group to draw onto
+			this.drawPetals(petalGroup1, 1);
+
+			var petalGroup0Stroke = this._canvas.g(); // group to draw onto
+			this.drawShapedPetals(petalGroup0Stroke, 0, true);
+			var petalGroup0Fill = this._canvas.g(); // group to draw onto
+			this.drawShapedPetals(petalGroup0Fill, 0);
+
+			// var petalGroup0Stroke1 = this._canvas.g(); // group to draw onto
+			// this.drawShapedPetals(petalGroup0Stroke1, 1, true);
+			// var petalGroup0Fill1 = this._canvas.g(); // group to draw onto
+			// this.drawShapedPetals(petalGroup0Fill1, 1);
+
 
 			var centerGroup = this._canvas.g(); // group to draw onto
 			this.drawCenter(centerGroup);
+
+			// var opacity = new SColor().fromRGBAObject(this.genes.get('center', 'color')).a;
+			// console.log(opacity);
+			// centerGroup.attr('opacity', opacity);
 		}
 	}, {
 		key: 'drawCenter',
@@ -22868,41 +22916,88 @@ var Flower = function (_BreedableDrawing) {
 			this.drawCircle(g, fillColor, strokeColor, strokeWidth, this.center, size);
 		}
 	}, {
-		key: 'drawCircle',
-		value: function drawCircle(g, fillColor, strokeColor, strokeWidth, center, diameter) {
-			g.add(this._canvas.circle(center.x, center.y, diameter).attr({
-				fill: fillColor,
-				stroke: strokeColor,
-				strokeWidth: strokeWidth
-			}));
+		key: 'pathStr',
+		value: function pathStr(command, pt) {
+			var xOff = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+			var yOff = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+
+			return " " + command + (pt.x + xOff) + " " + (pt.y + yOff);
+		}
+	}, {
+		key: 'drawShapedPetals',
+		value: function drawShapedPetals(g, level) {
+			var isStroke = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
+			var centerWidth = this.genes.get('center', 'size') + (this.genes.get('petals', 'centerOffSet')[level] - 25);
+			var availCircumference = 2 * Math.PI * centerWidth;
+			var color = "red";
+
+			if (isStroke) {
+				color = new SColor().fromRGBAObject(this.genes.get('petals', 'strokeColor')[level]).toRGBString();
+			} else {
+				color = new SColor().fromRGBAObject(this.genes.get('petals', 'color')[level]).toRGBString();
+			}
+
+			var strokeWidth = this.genes.get('petals', 'strokeWidth')[level];
+			var petalLength = this.genes.get('petals', 'length')[level];
+			var petalWidth = this.genes.get('petals', 'width')[level];
+
+			var numPetals = this.genes.get('petals', 'count')[level];
+			var isAngleOffset = this.genes.get('petals', 'isAngleOffset')[level] === 0;
+
+			var angle = 360 / numPetals;
+			var offAngle = angle / 2;
+
+			for (var i = 0; i < numPetals; i++) {
+				var center = void 0;
+				var a = angle * i;
+				if (isAngleOffset) {
+					a = a + offAngle;
+					center = this.center.pointAtAngleDeg(a, centerWidth);
+				} else {
+					center = this.center.pointAtAngleDeg(a, centerWidth);
+				}
+				var petalG = this._canvas.g();
+				var pathString = "";
+
+				if (isStroke) {
+					pathString = '\n\t\t\t\t\t M 0 -' + strokeWidth + '\n\t\t\t\t\t Q ' + (petalWidth + strokeWidth) + ' ' + (petalLength + strokeWidth) + ', 0 ' + (petalLength + strokeWidth) + '\n\t\t\t\t\t Q -' + (petalWidth + strokeWidth) + ' ' + (petalLength + strokeWidth) + ', 0 -' + strokeWidth + ' Z\n\t\t\t\t';
+				} else {
+					pathString = '\n\t\t\t\t\t M 0 0\n\t\t\t\t\t Q ' + petalWidth + ' ' + petalLength + ', 0 ' + petalLength + '\n\t\t\t\t\t Q -' + petalWidth + ' ' + petalLength + ', 0 0 Z\n\t\t\t\t';
+				}
+
+				petalG.add(this._canvas.path(pathString)).attr({
+					fill: color
+				});
+
+				petalG.attr({ transform: "translate(" + center.svgStr() + ") , rotate(" + (a + 180) + ")" });
+
+				g.add(petalG);
+			}
 		}
 	}, {
 		key: 'drawPetals',
 		value: function drawPetals(g, level) {
 			var centerWidth = this.genes.get('center', 'size');
-			var availCircumference = 2 * Math.PI * centerWidth;
 
 			var fillColor = new SColor().fromRGBAObject(this.genes.get('petals', 'color')[level]).toRGBString();
-
 			var strokeColor = new SColor().fromRGBAObject(this.genes.get('petals', 'strokeColor')[level]).toRGBString();
 			var strokeWidth = this.genes.get('petals', 'strokeWidth')[level];
+			var petalSize = this.genes.get('petals', 'length')[level];
 
-			//var strokeColor = new SColor().fromRGBAObject(this.genes.get('center', 'strokeColor')).toRGBString();
-			//var strokeWidth = this.genes.get('center', 'strokeWidth');
-
-			var petalSize = this.genes.get('petals', 'size')[level];
-
-			var maxPetals = availCircumference / petalSize;
-
-			var numPetals = Math.min(maxPetals, this.genes.get('petals', 'count')[level]);
-
+			var numPetals = this.genes.get('petals', 'count')[level];
 			var angle = 360 / numPetals;
 
 			for (var i = 0; i < numPetals; i++) {
 				var center = this.center.pointAtAngleDeg(angle * i, centerWidth);
-
-				this.drawCircle(g, fillColor, strokeColor, strokeWidth, center, petalSize);
+				this.drawCircle(g, strokeColor, strokeColor, 0, center, petalSize);
 			}
+
+			for (var _i = 0; _i < numPetals; _i++) {
+				var _center = this.center.pointAtAngleDeg(angle * _i, centerWidth);
+				this.drawCircle(g, fillColor, fillColor, 0, _center, Math.max(0, petalSize - strokeWidth));
+			}
+			//g.attr('opacity', fillColor.a);
 		}
 	}]);
 
@@ -23233,112 +23328,115 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 /*
-          ^  0, -1                    ^  0 deg
-          |                           |
-          |                           |
-          |                  -90      |
-<-------------------->      <-------------------->
--1, 0     |         1, 0     270      |         90
-          |                           |
-          |                           |
-          v  0, 1                     v  180
+					^	 0, -1										^	 0 deg
+					|														|
+					|														|
+					|									 -90			|
+<-------------------->			<-------------------->
+-1, 0			|					1, 0		 270			|					90
+					|														|
+					|														|
+					v	 0, 1											v	 180
 
 */
 
 var M = Math;
 
 var Point = function () {
-  function Point(x, y) {
-    _classCallCheck(this, Point);
+	function Point(x, y) {
+		_classCallCheck(this, Point);
 
-    this.x = x;
-    this.y = y;
-  }
+		this.x = x;
+		this.y = y;
+	}
 
-  _createClass(Point, [{
-    key: 'svgStr',
-    value: function svgStr() {
-      return this.x + ' ' + this.y;
-    }
-  }, {
-    key: 'toString',
-    value: function toString() {
-      return '[' + this.x + ',' + this.y + ']';
-    }
-  }, {
-    key: 'pointAtAngleDeg',
-    value: function pointAtAngleDeg(angleDeg, distance) {
-      return this.pointAtAngle(angleDeg * M.PI / 180, distance);
-    }
-  }, {
-    key: 'pointAtAngle',
-    value: function pointAtAngle(angleRadians, distance) {
-      var dx = distance * M.round(M.cos(angleRadians + 1.5 * M.PI) * 1000) / 1000;
-      var dy = distance * M.round(M.sin(angleRadians + 1.5 * M.PI) * 1000) / 1000;
-      return new Point(this.x + dx, this.y + dy);
-    }
-  }]);
+	_createClass(Point, [{
+		key: 'svgStr',
+		value: function svgStr() {
+			var xOff = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+			var yOff = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
-  return Point;
+			return this.x + xOff + ' ' + (this.y + yOff);
+		}
+	}, {
+		key: 'toString',
+		value: function toString() {
+			return '[' + this.x + ',' + this.y + ']';
+		}
+	}, {
+		key: 'pointAtAngleDeg',
+		value: function pointAtAngleDeg(angleDeg, distance) {
+			return this.pointAtAngle(angleDeg * M.PI / 180, distance);
+		}
+	}, {
+		key: 'pointAtAngle',
+		value: function pointAtAngle(angleRadians, distance) {
+			var dx = distance * M.round(M.cos(angleRadians + 1.5 * M.PI) * 1000) / 1000;
+			var dy = distance * M.round(M.sin(angleRadians + 1.5 * M.PI) * 1000) / 1000;
+			return new Point(this.x + dx, this.y + dy);
+		}
+	}]);
+
+	return Point;
 }();
 
 var Line = function () {
-  function Line(p1, p2) {
-    _classCallCheck(this, Line);
+	function Line(p1, p2) {
+		_classCallCheck(this, Line);
 
-    this.p1 = p1;
-    this.p2 = p2;
-  }
+		this.p1 = p1;
+		this.p2 = p2;
+	}
 
-  // get the angle that this line is at
+	// get the angle that this line is at
 
 
-  _createClass(Line, [{
-    key: 'angleRad',
-    value: function angleRad() {
-      // this makes zero north 0,0 to 0,1 = 0
-      var dy = this.p1.y - this.p2.y;
-      var dx = this.p1.x - this.p2.x;
-      var theta = M.atan2(dy, dx);
-      return (theta + M.PI * 1.5) % (2 * Math.PI);
-    }
-    // as above but degrees
+	_createClass(Line, [{
+		key: 'angleRad',
+		value: function angleRad() {
+			// this makes zero north 0,0 to 0,1 = 0
+			var dy = this.p1.y - this.p2.y;
+			var dx = this.p1.x - this.p2.x;
+			var theta = M.atan2(dy, dx);
+			return (theta + M.PI * 1.5) % (2 * Math.PI);
+		}
+		// as above but degrees
 
-  }, {
-    key: 'angleDeg',
-    value: function angleDeg() {
-      return this.angleRad() * (180 / M.PI);
-    }
-  }, {
-    key: 'pointAtAngleDeg',
-    value: function pointAtAngleDeg(angleDeg, distance) {
-      return this.pointAtAngle(angleDeg * M.PI / 180, distance);
-    }
-  }, {
-    key: 'pointAtCenter',
-    value: function pointAtCenter() {
-      return new Point((this.p1.x + this.p2.x) / 2, (this.p1.y + this.p2.y) / 2);
-    }
-  }, {
-    key: 'pointAtAngle',
-    value: function pointAtAngle(angleRadians, distance) {
-      var ang = this.angleRad();
-      angleRadians = angleRadians + ang;
-      return this.p2.pointAtAngle(angleRadians, distance);
-    }
-  }, {
-    key: 'toString',
-    value: function toString() {
-      return '[' + this.p1.toString() + ',' + this.p2.toString() + ']';
-    }
-  }]);
+	}, {
+		key: 'angleDeg',
+		value: function angleDeg() {
+			return this.angleRad() * (180 / M.PI);
+		}
+	}, {
+		key: 'pointAtAngleDeg',
+		value: function pointAtAngleDeg(angleDeg, distance) {
+			return this.pointAtAngle(angleDeg * M.PI / 180, distance);
+		}
+	}, {
+		key: 'pointAtCenter',
+		value: function pointAtCenter() {
+			return new Point((this.p1.x + this.p2.x) / 2, (this.p1.y + this.p2.y) / 2);
+		}
+	}, {
+		key: 'pointAtAngle',
+		value: function pointAtAngle(angleRadians, distance) {
+			var ang = this.angleRad();
+			angleRadians = angleRadians + ang;
+			return this.p2.pointAtAngle(angleRadians, distance);
+		}
+	}, {
+		key: 'toString',
+		value: function toString() {
+			return '[' + this.p1.toString() + ',' + this.p2.toString() + ']';
+		}
+	}]);
 
-  return Line;
+	return Line;
 }();
 
 module.exports = {
-  Point: Point,
-  Line: Line
+	Point: Point,
+	Line: Line
 };
 
 },{}],162:[function(require,module,exports){

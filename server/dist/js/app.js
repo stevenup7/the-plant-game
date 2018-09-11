@@ -22595,60 +22595,60 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var GeneSet = require('./gene').GeneSet;
 
 var BreedableDrawing = function () {
-	function BreedableDrawing(canvas) {
-		var initializeRandom = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
-		var GENES = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  function BreedableDrawing(canvas) {
+    var initializeRandom = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+    var GENES = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
-		_classCallCheck(this, BreedableDrawing);
+    _classCallCheck(this, BreedableDrawing);
 
-		this._canvas = canvas;
-		this.genes = new GeneSet(GENES);
-		if (initializeRandom) {
-			this.genes.randomize();
-		}
-	}
+    this._canvas = canvas;
+    this.genes = new GeneSet(GENES);
+    if (initializeRandom) {
+      this.genes.randomize();
+    }
+  }
 
-	_createClass(BreedableDrawing, [{
-		key: '_init_draw',
-		value: function _init_draw() {
-			this._canvas.clear();
-			this._width = this._canvas.node.clientWidth;
-			this._height = this._canvas.node.clientHeight;
-			this.f = this._canvas.filter(Snap.filter.blur(1, 1));
-			this._canvas.append(this.f);
-		}
-	}, {
-		key: 'swap',
-		value: function swap(otherDrawing) {
-			var temp = {
-				genes: otherDrawing.genes
-			};
-			otherDrawing.genes = this.genes;
-			this.genes = temp.genes;
-		}
-	}, {
-		key: 'drawDebugLine',
-		value: function drawDebugLine(l, g) {
-			var color = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'rgba(255,0,0,0.5)';
+  _createClass(BreedableDrawing, [{
+    key: '_init_draw',
+    value: function _init_draw() {
+      this._canvas.clear();
+      this._width = this._canvas.node.clientWidth;
+      this._height = this._canvas.node.clientHeight;
+      this.f = this._canvas.filter(Snap.filter.blur(1, 1));
+      this._canvas.append(this.f);
+    }
+  }, {
+    key: 'swap',
+    value: function swap(otherDrawing) {
+      var temp = {
+        genes: otherDrawing.genes
+      };
+      otherDrawing.genes = this.genes;
+      this.genes = temp.genes;
+    }
+  }, {
+    key: 'drawDebugLine',
+    value: function drawDebugLine(l, g) {
+      var color = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'rgba(255,0,0,0.5)';
 
-			g = g || this._canvas;
-			var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
-			line.attr('strokeWidth', 1);
-			line.attr('strokeDasharray', '1, 5');
-			line.attr('stroke', color);
-		}
-	}, {
-		key: 'drawCircle',
-		value: function drawCircle(g, fillColor, strokeColor, strokeWidth, center, diameter) {
-			g.add(this._canvas.circle(center.x, center.y, diameter).attr({
-				fill: fillColor,
-				stroke: strokeColor,
-				strokeWidth: strokeWidth
-			}));
-		}
-	}]);
+      g = g || this._canvas;
+      var line = this._canvas.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
+      line.attr('strokeWidth', 1);
+      line.attr('strokeDasharray', '1, 5');
+      line.attr('stroke', color);
+    }
+  }, {
+    key: 'drawCircle',
+    value: function drawCircle(g, fillColor, strokeColor, strokeWidth, center, diameter) {
+      g.add(this._canvas.circle(center.x, center.y, diameter).attr({
+        fill: fillColor,
+        stroke: strokeColor,
+        strokeWidth: strokeWidth
+      }));
+    }
+  }]);
 
-	return BreedableDrawing;
+  return BreedableDrawing;
 }();
 
 module.exports = BreedableDrawing;
@@ -22843,165 +22843,169 @@ var BreedableDrawing = require('./breedableDrawing');
 var NUM_PETAL_LAYERS = 2;
 
 var FLOWER_GENES = {
-	general: {
-		hasRandomness: ["int", 0, 1],
-		structure: ["int", 0, 1]
-	},
-	center: {
-		size: ["int", 5, 50],
-		color: ["color"],
-		strokeColor: ["color"],
-		strokeWidth: ["int", 1, 5]
-	},
-	petals: {
-		strokeWidth: ["intArray", NUM_PETAL_LAYERS, 1, 10],
-		angle: ["intArray", NUM_PETAL_LAYERS, 5, 100],
-		count: ["intArray", NUM_PETAL_LAYERS, 1, 15],
-		width: ["intArray", NUM_PETAL_LAYERS, 1, 90],
-		length: ["intArray", NUM_PETAL_LAYERS, 1, 90],
-		style: ["intArray", NUM_PETAL_LAYERS, 1, 10],
-		blurry: ["intArray", NUM_PETAL_LAYERS, 1, 5],
-		color: ["colorArray", NUM_PETAL_LAYERS],
-		strokeColor: ["colorArray", NUM_PETAL_LAYERS],
-		isAngleOffset: ["intArray", NUM_PETAL_LAYERS, 0, 1],
-		centerOffSet: ["intArray", NUM_PETAL_LAYERS, 0, 50]
-	}
+  general: {
+    hasRandomness: ["int", 0, 1],
+    structure: ["int", 0, 1],
+    background: ["color"]
+  },
+  center: {
+    size: ["int", 5, 50],
+    color: ["color"],
+    strokeColor: ["color"],
+    strokeWidth: ["int", 1, 5]
+  },
+  petals: {
+    strokeWidth: ["intArray", NUM_PETAL_LAYERS, 1, 10],
+    angle: ["intArray", NUM_PETAL_LAYERS, 5, 100],
+    count: ["intArray", NUM_PETAL_LAYERS, 1, 15],
+    width: ["intArray", NUM_PETAL_LAYERS, 1, 90],
+    length: ["intArray", NUM_PETAL_LAYERS, 1, 90],
+    style: ["intArray", NUM_PETAL_LAYERS, 1, 10],
+    blurry: ["intArray", NUM_PETAL_LAYERS, 1, 5],
+    color: ["colorArray", NUM_PETAL_LAYERS],
+    strokeColor: ["colorArray", NUM_PETAL_LAYERS],
+    isAngleOffset: ["intArray", NUM_PETAL_LAYERS, 0, 1],
+    centerOffSet: ["intArray", NUM_PETAL_LAYERS, 0, 50]
+  }
 };
 
 var Flower = function (_BreedableDrawing) {
-	_inherits(Flower, _BreedableDrawing);
+  _inherits(Flower, _BreedableDrawing);
 
-	function Flower(canvas) {
-		var initializeRandom = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+  function Flower(canvas) {
+    var initializeRandom = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
 
-		_classCallCheck(this, Flower);
+    _classCallCheck(this, Flower);
 
-		return _possibleConstructorReturn(this, (Flower.__proto__ || Object.getPrototypeOf(Flower)).call(this, canvas, initializeRandom, FLOWER_GENES));
-	}
+    return _possibleConstructorReturn(this, (Flower.__proto__ || Object.getPrototypeOf(Flower)).call(this, canvas, initializeRandom, FLOWER_GENES));
+  }
 
-	_createClass(Flower, [{
-		key: 'draw',
-		value: function draw() {
-			this._init_draw();
-			this.center = new Point(this._width / 2, this._height / 2);
+  _createClass(Flower, [{
+    key: 'draw',
+    value: function draw() {
+      this._init_draw();
+      this.center = new Point(this._width / 2, this._height / 2);
+      var fillColor = new SColor().fromRGBAObject(this.genes.get('general', 'background')).toRGBString();
+      this.drawCircle(this._canvas, fillColor, fillColor, 0, this.center, 500);
 
-			var petalGroup1 = this._canvas.g(); // group to draw onto
-			this.drawPetals(petalGroup1, 1);
+      var petalGroup1 = this._canvas.g(); // group to draw onto
+      this.drawPetals(petalGroup1, 1);
 
-			var petalGroup0Stroke = this._canvas.g(); // group to draw onto
-			this.drawShapedPetals(petalGroup0Stroke, 0, true);
-			var petalGroup0Fill = this._canvas.g(); // group to draw onto
-			this.drawShapedPetals(petalGroup0Fill, 0);
+      var petalGroup0Stroke = this._canvas.g(); // group to draw onto
+      this.drawShapedPetals(petalGroup0Stroke, 0, true);
+      var petalGroup0Fill = this._canvas.g(); // group to draw onto
+      this.drawShapedPetals(petalGroup0Fill, 0);
 
-			// var petalGroup0Stroke1 = this._canvas.g(); // group to draw onto
-			// this.drawShapedPetals(petalGroup0Stroke1, 1, true);
-			// var petalGroup0Fill1 = this._canvas.g(); // group to draw onto
-			// this.drawShapedPetals(petalGroup0Fill1, 1);
+      // var petalGroup0Stroke1 = this._canvas.g(); // group to draw onto
+      // this.drawShapedPetals(petalGroup0Stroke1, 1, true);
+      // var petalGroup0Fill1 = this._canvas.g(); // group to draw onto
+      // this.drawShapedPetals(petalGroup0Fill1, 1);
 
 
-			var centerGroup = this._canvas.g(); // group to draw onto
-			this.drawCenter(centerGroup);
+      var centerGroup = this._canvas.g(); // group to draw onto
+      this.drawCenter(centerGroup);
 
-			// var opacity = new SColor().fromRGBAObject(this.genes.get('center', 'color')).a;
-			// console.log(opacity);
-			// centerGroup.attr('opacity', opacity);
-		}
-	}, {
-		key: 'drawCenter',
-		value: function drawCenter(g) {
-			var fillColor = new SColor().fromRGBAObject(this.genes.get('center', 'color')).toRGBString();
-			var strokeColor = new SColor().fromRGBAObject(this.genes.get('center', 'strokeColor')).toRGBString();
-			var strokeWidth = this.genes.get('center', 'strokeWidth');
-			var size = this.genes.get('center', 'size');
-			this.drawCircle(g, fillColor, strokeColor, strokeWidth, this.center, size);
-		}
-	}, {
-		key: 'pathStr',
-		value: function pathStr(command, pt) {
-			var xOff = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
-			var yOff = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+      // var opacity = new SColor().fromRGBAObject(this.genes.get('center', 'color')).a;
+      // console.log(opacity);
+      // centerGroup.attr('opacity', opacity);
 
-			return " " + command + (pt.x + xOff) + " " + (pt.y + yOff);
-		}
-	}, {
-		key: 'drawShapedPetals',
-		value: function drawShapedPetals(g, level) {
-			var isStroke = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+    }
+  }, {
+    key: 'drawCenter',
+    value: function drawCenter(g) {
+      var fillColor = new SColor().fromRGBAObject(this.genes.get('center', 'color')).toRGBString();
+      var strokeColor = new SColor().fromRGBAObject(this.genes.get('center', 'strokeColor')).toRGBString();
+      var strokeWidth = this.genes.get('center', 'strokeWidth');
+      var size = this.genes.get('center', 'size');
+      this.drawCircle(g, fillColor, strokeColor, strokeWidth, this.center, size);
+    }
+  }, {
+    key: 'pathStr',
+    value: function pathStr(command, pt) {
+      var xOff = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+      var yOff = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
 
-			var centerWidth = this.genes.get('center', 'size') + (this.genes.get('petals', 'centerOffSet')[level] - 25);
-			var availCircumference = 2 * Math.PI * centerWidth;
-			var color = "red";
+      return " " + command + (pt.x + xOff) + " " + (pt.y + yOff);
+    }
+  }, {
+    key: 'drawShapedPetals',
+    value: function drawShapedPetals(g, level) {
+      var isStroke = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
-			if (isStroke) {
-				color = new SColor().fromRGBAObject(this.genes.get('petals', 'strokeColor')[level]).toRGBString();
-			} else {
-				color = new SColor().fromRGBAObject(this.genes.get('petals', 'color')[level]).toRGBString();
-			}
+      var centerWidth = this.genes.get('center', 'size') + (this.genes.get('petals', 'centerOffSet')[level] - 25);
+      var availCircumference = 2 * Math.PI * centerWidth;
+      var color = "red";
 
-			var strokeWidth = this.genes.get('petals', 'strokeWidth')[level];
-			var petalLength = this.genes.get('petals', 'length')[level];
-			var petalWidth = this.genes.get('petals', 'width')[level];
+      if (isStroke) {
+        color = new SColor().fromRGBAObject(this.genes.get('petals', 'strokeColor')[level]).toRGBString();
+      } else {
+        color = new SColor().fromRGBAObject(this.genes.get('petals', 'color')[level]).toRGBString();
+      }
 
-			var numPetals = this.genes.get('petals', 'count')[level];
-			var isAngleOffset = this.genes.get('petals', 'isAngleOffset')[level] === 0;
+      var strokeWidth = this.genes.get('petals', 'strokeWidth')[level];
+      var petalLength = this.genes.get('petals', 'length')[level];
+      var petalWidth = this.genes.get('petals', 'width')[level];
 
-			var angle = 360 / numPetals;
-			var offAngle = angle / 2;
+      var numPetals = this.genes.get('petals', 'count')[level];
+      var isAngleOffset = this.genes.get('petals', 'isAngleOffset')[level] === 0;
 
-			for (var i = 0; i < numPetals; i++) {
-				var center = void 0;
-				var a = angle * i;
-				if (isAngleOffset) {
-					a = a + offAngle;
-					center = this.center.pointAtAngleDeg(a, centerWidth);
-				} else {
-					center = this.center.pointAtAngleDeg(a, centerWidth);
-				}
-				var petalG = this._canvas.g();
-				var pathString = "";
+      var angle = 360 / numPetals;
+      var offAngle = angle / 2;
 
-				if (isStroke) {
-					pathString = '\n\t\t\t\t\t M 0 -' + strokeWidth + '\n\t\t\t\t\t Q ' + (petalWidth + strokeWidth) + ' ' + (petalLength + strokeWidth) + ', 0 ' + (petalLength + strokeWidth) + '\n\t\t\t\t\t Q -' + (petalWidth + strokeWidth) + ' ' + (petalLength + strokeWidth) + ', 0 -' + strokeWidth + ' Z\n\t\t\t\t';
-				} else {
-					pathString = '\n\t\t\t\t\t M 0 0\n\t\t\t\t\t Q ' + petalWidth + ' ' + petalLength + ', 0 ' + petalLength + '\n\t\t\t\t\t Q -' + petalWidth + ' ' + petalLength + ', 0 0 Z\n\t\t\t\t';
-				}
+      for (var i = 0; i < numPetals; i++) {
+        var center = void 0;
+        var a = angle * i;
+        if (isAngleOffset) {
+          a = a + offAngle;
+          center = this.center.pointAtAngleDeg(a, centerWidth);
+        } else {
+          center = this.center.pointAtAngleDeg(a, centerWidth);
+        }
+        var petalG = this._canvas.g();
+        var pathString = "";
 
-				petalG.add(this._canvas.path(pathString)).attr({
-					fill: color
-				});
+        if (isStroke) {
+          pathString = '\n                                         M 0 -' + strokeWidth + '\n                                         Q ' + (petalWidth + strokeWidth) + ' ' + (petalLength + strokeWidth) + ', 0 ' + (petalLength + strokeWidth) + '\n                                         Q -' + (petalWidth + strokeWidth) + ' ' + (petalLength + strokeWidth) + ', 0 -' + strokeWidth + ' Z\n                                ';
+        } else {
+          pathString = '\n                                         M 0 0\n                                         Q ' + petalWidth + ' ' + petalLength + ', 0 ' + petalLength + '\n                                         Q -' + petalWidth + ' ' + petalLength + ', 0 0 Z\n                                ';
+        }
 
-				petalG.attr({ transform: "translate(" + center.svgStr() + ") , rotate(" + (a + 180) + ")" });
+        petalG.add(this._canvas.path(pathString)).attr({
+          fill: color
+        });
 
-				g.add(petalG);
-			}
-		}
-	}, {
-		key: 'drawPetals',
-		value: function drawPetals(g, level) {
-			var centerWidth = this.genes.get('center', 'size');
+        petalG.attr({ transform: "translate(" + center.svgStr() + ") , rotate(" + (a + 180) + ")" });
 
-			var fillColor = new SColor().fromRGBAObject(this.genes.get('petals', 'color')[level]).toRGBString();
-			var strokeColor = new SColor().fromRGBAObject(this.genes.get('petals', 'strokeColor')[level]).toRGBString();
-			var strokeWidth = this.genes.get('petals', 'strokeWidth')[level];
-			var petalSize = this.genes.get('petals', 'length')[level];
+        g.add(petalG);
+      }
+    }
+  }, {
+    key: 'drawPetals',
+    value: function drawPetals(g, level) {
+      var centerWidth = this.genes.get('center', 'size');
 
-			var numPetals = this.genes.get('petals', 'count')[level];
-			var angle = 360 / numPetals;
+      var fillColor = new SColor().fromRGBAObject(this.genes.get('petals', 'color')[level]).toRGBString();
+      var strokeColor = new SColor().fromRGBAObject(this.genes.get('petals', 'strokeColor')[level]).toRGBString();
+      var strokeWidth = this.genes.get('petals', 'strokeWidth')[level];
+      var petalSize = this.genes.get('petals', 'length')[level];
 
-			for (var i = 0; i < numPetals; i++) {
-				var center = this.center.pointAtAngleDeg(angle * i, centerWidth);
-				this.drawCircle(g, strokeColor, strokeColor, 0, center, petalSize);
-			}
+      var numPetals = this.genes.get('petals', 'count')[level];
+      var angle = 360 / numPetals;
 
-			for (var _i = 0; _i < numPetals; _i++) {
-				var _center = this.center.pointAtAngleDeg(angle * _i, centerWidth);
-				this.drawCircle(g, fillColor, fillColor, 0, _center, Math.max(0, petalSize - strokeWidth));
-			}
-			//g.attr('opacity', fillColor.a);
-		}
-	}]);
+      for (var i = 0; i < numPetals; i++) {
+        var center = this.center.pointAtAngleDeg(angle * i, centerWidth);
+        this.drawCircle(g, strokeColor, strokeColor, 0, center, petalSize);
+      }
 
-	return Flower;
+      for (var _i = 0; _i < numPetals; _i++) {
+        var _center = this.center.pointAtAngleDeg(angle * _i, centerWidth);
+        this.drawCircle(g, fillColor, fillColor, 0, _center, Math.max(0, petalSize - strokeWidth));
+      }
+      //g.attr('opacity', fillColor.a);
+    }
+  }]);
+
+  return Flower;
 }(BreedableDrawing);
 
 module.exports = Flower;

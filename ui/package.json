@@ -1,7 +1,7 @@
 {
-  "name": "recipe",
+  "name": "The Plant Game",
   "version": "1.0.0",
-  "description": "recipe site for easy to read presentation ",
+  "description": "Playing with genetic algorythms and drawing",
   "main": "app.js",
   "watch": {
     "build": [

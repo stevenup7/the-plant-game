@@ -1,7 +1,14 @@
-var DrawingObject = require('./flower');
-var Vue = window.Vue;
+import DrawingObject from './flower.js';
+import { createApp } from 'vue';
+import eve from 'eve';
+import Snap from 'snapsvg';
+import _ from 'lodash';
 
-Vue.component('drawing-object', {
+// Make eve available on window before snapsvg needs it (snapsvg expects window.eve)
+window.eve = eve;
+console.log("app init")
+// Drawing Object Component
+const DrawingObjectComponent = {
 	props: ['object'],
 	data: function () {
 		return {
@@ -81,11 +88,14 @@ Vue.component('drawing-object', {
 			event.preventDefault();
 		}
 	}
-});
+};
 
-var app = new Vue ({
-	el: '#game',
+// Main App Component
+const App = {
 	isPreview: false,
+	components: {
+		'drawing-object': DrawingObjectComponent
+	},
 	template: `
 	<div>
 		 <div class="game-menu">
@@ -105,10 +115,13 @@ var app = new Vue ({
 		 </ul>
 	</div>
 	`,
-	data: {
-		drawingObjects: []
+	data: function() {
+		return {
+			drawingObjects: []
+		};
 	},
 	created: function () {
+		console.log("app created")
 		for(var i = 0; i < 24; i++) {
 			//console.log('pushing');
 			this.drawingObjects.push({id: i});
@@ -196,11 +209,18 @@ var app = new Vue ({
 			});
 		}
 	}
-});
+};
+
+// Create and mount Vue 3 app
+const appInstance = createApp(App);
+const vm = appInstance.mount('#game');
+
+// Store app instance for keyboard handler
+window.app = vm;
 
 document.body.onkeyup = function (e) {
 	if(e.keyCode === 82) { // r
-		app.random();
+		vm.random();
 	}
 };
 

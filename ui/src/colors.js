@@ -56,9 +56,7 @@ class SColor {
 
 }
 
-module.exports = {
-  SColor: SColor
-};
+export { SColor };
 
 
 /**

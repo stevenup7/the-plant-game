@@ -1,5 +1,7 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { SColor } from '../src/colors.js';
+
 describe('Colors Module', function () {
-  var SColor = require('../src/colors').SColor;
 
   beforeEach (function () {
 

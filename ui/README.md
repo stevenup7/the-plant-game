@@ -1,30 +1,66 @@
-# ES6 with require javascript template project
+# Plant Game — UI
 
-This project comes from me wanting to see how hard the switch from gulp to npm scripts would be.
+An interactive generative art application that breeds procedurally-generated plants and flowers using genetic algorithms. Drag plants onto each other to breed or swap them.
 
-Assumes and app.js in src folder as base for project.
+## Tech Stack
 
-## Building the Project
+- **Vue 3** — UI framework
+- **Vite** — build tool and dev server
+- **Snap.svg** — SVG rendering
+- **Vitest** — unit testing
+- **ESLint 9** — linting (flat config)
+
+## Prerequisites
+
+- Node.js v25+ (see `.nvmrc`)
+- npm
+
+## Development
 
 ```bash
-npm run build
+npm install
+npm run dev       # dev server at http://localhost:8000
 ```
 
-this will call several other npm scripts
- * browserify - for require
- * babel - build es6 to es2015
- * build_cleanup - remove working files
-
-### Autobuilding project
+## Testing
 
 ```bash
-npm run watch
+npm test          # run all tests
+npm run test:ui   # run tests with the Vitest UI dashboard
 ```
 
-this will also run lint
+## Linting
 
-## TODO
-testing (karma)
-e2e (protractor)
+```bash
+npm run lint
+```
 
-coding standards (jscs)
+## Building
+
+```bash
+npm run build     # outputs to ../server/dist/js/app.js
+npm run preview   # preview the production build
+```
+
+## Project Structure
+
+```
+src/
+  app.js              # Vue 3 app entry point
+  plant.js            # Plant drawing (recursive SVG stems)
+  flower.js           # Flower drawing (petals, center)
+  gene.js             # Genetic algorithm (Gene, GeneSet)
+  breedableDrawing.js # Base class for drawable/breedable objects
+  colors.js           # RGBA/HSL color utilities
+  math2d.js           # 2D geometry (Point, Line)
+  util.js             # randomInt, seedrandom helpers
+test/
+  gene-spec.js        # Gene and GeneSet tests
+  plant-spec.js       # Plant tests
+  colors-spec.js      # Color conversion tests
+  math2d-spec.js      # Geometry tests
+```
+
+## How Breeding Works
+
+Each plant/flower has a `GeneSet` — a collection of typed genes (integers, arrays, colors). Dragging one plant onto another breeds their gene sets using crossover and optional mutation. Dragging to the right half swaps genes instead.

@@ -1,3 +1,10 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { GeneSet } from '../src/gene.js';
+import seedrandom from 'seedrandom';
+
+// Make seedrandom available on Math for tests
+Math.seedrandom = seedrandom;
+
 var TEST_GENES = {
   a1: {
     a1int: ["int", 1, 10],
@@ -22,10 +29,9 @@ var TEST_GENES = {
 
 describe('Genes Module', function () {
   var genes;
-  var GeneSet;
 
   beforeEach (function () {
-    GeneSet = require('../src/Gene').GeneSet;
+    // GeneSet already imported
   });
 
   it('to do the first parse of the definition correctly' , function () {
@@ -157,7 +163,28 @@ describe('Genes Module', function () {
     var g1 = new GeneSet(TEST_GENES);
     g1.randomize();
 
+    // mutate at 100% chance on the individual gene
+    g1._genes.a1.mutate(1.0);
 
+    // structure is intact and values are in valid range
+    var afterInt = g1.get('a1', 'a1int');
+    expect(typeof afterInt).toEqual('number');
+    expect(afterInt).toBeGreaterThanOrEqual(1);
+    expect(afterInt).toBeLessThanOrEqual(10);
+
+    // color fields are still present
+    var afterColor = g1.get('a1', 'a1color');
+    expect(afterColor).toHaveProperty('r');
+    expect(afterColor).toHaveProperty('g');
+    expect(afterColor).toHaveProperty('b');
+    expect(afterColor).toHaveProperty('a');
+
+    // intArray values stay in range
+    var afterArray = g1.get('a1', 'a1intArray');
+    for (var i = 0; i < afterArray.length; i++) {
+      expect(afterArray[i]).toBeGreaterThanOrEqual(0);
+      expect(afterArray[i]).toBeLessThanOrEqual(100);
+    }
   });
 
 });

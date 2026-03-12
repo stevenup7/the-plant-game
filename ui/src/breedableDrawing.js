@@ -1,4 +1,5 @@
-var GeneSet             = require('./gene').GeneSet;
+import Snap from 'snapsvg';
+import { GeneSet } from './gene.js';
 
 
 class BreedableDrawing {
@@ -50,4 +51,4 @@ class BreedableDrawing {
 
 }
 
-module.exports = BreedableDrawing;
+export default BreedableDrawing;

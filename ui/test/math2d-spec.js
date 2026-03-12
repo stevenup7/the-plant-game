@@ -1,30 +1,29 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { Point, Line } from '../src/math2d.js';
+
 describe('Math2d', function () {
-  var Point = require('../src/math2d').Point;
-  var Line  = require('../src/math2d').Line;
   beforeEach (function () {
   });
 
-  // it('give proper angles for lines' , function () {
-  //   var points  = [[0,1], [1,0], [0,-1], [-1,0]];
-  //   var expectedDegrees = [180,  90, 0,  270];
-  //   var p1;
-  //   var p2;
-  //   var l;
-  //   var angleRad;
-  //   var angle;
+  it('give proper angles for lines' , function () {
+    var points  = [[0,1], [1,0], [0,-1], [-1,0]];
+    var expectedDegrees = [180,  90, 0,  270];
+    var p1;
+    var p2;
+    var l;
+    var angle;
 
-  //   for(var i=0; i < points.length; i++) {
-  //     p1 = new Point(0,0);
-  //     p2 = new Point(
-  //       points[i][0],
-  //       points[i][1]
-  //     );
-  //     l = new Line(p1, p2);
-  //     angleRad = l.angleRad();
-  //     angle = l.angleDeg();
-  //     expect(angle).toBe(expectedDegrees[i]);
-  //   }
-  // });
+    for(var i=0; i < points.length; i++) {
+      p1 = new Point(0,0);
+      p2 = new Point(
+        points[i][0],
+        points[i][1]
+      );
+      l = new Line(p1, p2);
+      angle = l.angleDeg();
+      expect(angle).toBe(expectedDegrees[i]);
+    }
+  });
 
 
 
@@ -61,7 +60,7 @@ describe('Math2d', function () {
     var l = new Line(new Point(0,0), new Point(0, -1)); // line pointing up
     var p = l.pointAtAngleDeg(0, 1);
 
-    expect(p.x).toBe(10000);
+    expect(p.x).toBe(0);
     expect(p.y).toBe(-2);
 
     l = new Line(new Point(0,0), new Point(0, -1)); // line pointing up

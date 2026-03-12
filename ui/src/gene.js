@@ -1,4 +1,5 @@
-var randomInt = require('./util').randomInt;
+import _ from 'lodash';
+import { randomInt } from './util.js';
 
 class Gene {
 
@@ -259,8 +260,4 @@ class GeneSet {
   }
 }
 
-module.exports = {
-  GeneSet: GeneSet,
-  Gene: Gene,
-  randomInt: randomInt
-};
+export { GeneSet, Gene, randomInt };

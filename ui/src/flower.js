@@ -1,9 +1,7 @@
-var GeneSet = require('./gene').GeneSet;
-var randomInt = require('./gene').randomInt;
-var Point = require('./math2d').Point;
-var Line = require('./math2d').Line;
-var SColor = require('./colors').SColor;
-var BreedableDrawing = require('./breedableDrawing');
+import { GeneSet, randomInt } from './gene.js';
+import { Point, Line } from './math2d.js';
+import { SColor } from './colors.js';
+import BreedableDrawing from './breedableDrawing.js';
 
 var NUM_PETAL_LAYERS = 2;
 
@@ -169,4 +167,4 @@ class Flower extends BreedableDrawing{
 }
 
 
-module.exports = Flower;
+export default Flower;

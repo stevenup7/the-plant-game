@@ -81,7 +81,4 @@ class Line {
 
 }
 
-module.exports = {
-	Point: Point,
-	Line: Line
-};
+export { Point, Line };

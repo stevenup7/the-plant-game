@@ -1,11 +1,7 @@
 import DrawingObject from './flower.js';
 import { createApp } from 'vue';
-import eve from 'eve';
-import Snap from 'snapsvg';
+import Snap from 'snapsvg-cjs';
 import _ from 'lodash';
-
-// Make eve available on window before snapsvg needs it (snapsvg expects window.eve)
-window.eve = eve;
 console.log("app init")
 // Drawing Object Component
 const DrawingObjectComponent = {

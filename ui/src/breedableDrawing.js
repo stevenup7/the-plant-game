@@ -1,4 +1,4 @@
-import Snap from 'snapsvg';
+import Snap from 'snapsvg-cjs';
 import { GeneSet } from './gene.js';
 
 

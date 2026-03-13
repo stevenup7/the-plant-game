@@ -141,7 +141,7 @@ onMounted(() => {
   });
   document.body.addEventListener('keyup', (e) => {
     if (e.key === 'Control') ctrlHeld.value = false;
-    if (e.key === 'r') store.random();
+    if (e.key === 'r' && e.ctrlKey) store.random();
     if (e.key === 'b' && e.ctrlKey) store.breedChecked();
   });
 });

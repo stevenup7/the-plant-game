@@ -181,10 +181,10 @@ function onDragOver(event) {
 }
 
 .drop-zone-breed {
-  background: rgba(28, 27, 25, 0.06);
+  background: rgba(28, 27, 25, 0.18);
 }
 
 .drop-zone-swap {
-  background: rgba(28, 27, 25, 0.06);
+  background: rgba(28, 27, 25, 0.18);
 }
 </style>

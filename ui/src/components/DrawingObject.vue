@@ -4,6 +4,7 @@
       <input id="lock" type="checkbox" v-model="locked">
     </div>
     <div
+      ref="plantCanvas"
       class="drawing-wrapper"
       draggable="true"
       :id="'oc' + object.id"
@@ -13,6 +14,7 @@
       @dragleave="onDragLeave"
       @dragover="onDragOver"
     >
+      <canvas ref="rasterCanvas" class="raster-canvas" :class="{ visible: isRasterized }"></canvas>
       <div v-if="isOver" class="drop-overlay">
         <div class="drop-zone drop-zone-breed" :class="{ active: action === 'breed' }">breed</div>
         <div class="drop-zone drop-zone-swap" :class="{ active: action === 'swap' }">swap</div>
@@ -33,6 +35,10 @@ const store = usePlantsStore();
 const isOver = ref(false);
 const locked = ref(false);
 const action = ref('');
+const plantCanvas = ref(null);
+const rasterCanvas = ref(null);
+const isRasterized = ref(false);
+let snapInstance = null;
 let half = 0;
 let dragCounter = 0;
 
@@ -40,14 +46,43 @@ watch(locked, (val) => {
   props.object.locked = val;
 });
 
+function rasterize() {
+  const svgEl = snapInstance?.node;
+  if (!svgEl) return;
+  const width = svgEl.clientWidth || parseInt(svgEl.getAttribute('width'), 10);
+  const height = svgEl.clientHeight || parseInt(svgEl.getAttribute('height'), 10);
+  if (!width || !height) return;
+
+  const serializer = new XMLSerializer();
+  const svgStr = serializer.serializeToString(svgEl);
+  const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+
+  const img = new Image();
+  img.onload = () => {
+    const canvas = rasterCanvas.value;
+    canvas.width = width;
+    canvas.height = height;
+    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+    URL.revokeObjectURL(url);
+    snapInstance.clear();
+    isRasterized.value = true;
+  };
+  img.onerror = () => URL.revokeObjectURL(url);
+  img.src = url;
+}
+
 onMounted(() => {
-  const plantCanvas = document.querySelector('#oc' + props.object.id);
-  const width = plantCanvas.clientWidth;
+  const width = plantCanvas.value.clientWidth;
   half = width / 2;
   const svg = new Snap(width, width);
-  svg.prependTo(plantCanvas);
+  svg.prependTo(plantCanvas.value);
+  snapInstance = svg;
   props.object.drawing = new DrawingObject(svg);
   props.object.locked = locked.value;
+
+  const originalDraw = props.object.drawing.draw.bind(props.object.drawing);
+  props.object.drawing.draw = () => { isRasterized.value = false; originalDraw(); rasterize(); };
   props.object.drawing.draw();
 });
 
@@ -91,6 +126,18 @@ function onDragOver(event) {
 <style scoped>
 .drawing-wrapper {
   position: relative;
+}
+
+.raster-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: none;
+  pointer-events: none;
+}
+
+.raster-canvas.visible {
+  display: block;
 }
 
 .drop-overlay {

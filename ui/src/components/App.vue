@@ -4,11 +4,18 @@
       <button class="button-secondary" @click="store.random()">random</button>
       <button class="button-secondary" @click="store.save()">save</button>
       <button class="button-secondary" @click="store.load()">load</button>
-      <button class="button-secondary" @click="breedChecked">Breed Checked</button>
+      <button class="button-secondary" @click="store.breedChecked()">Breed Checked</button>
       <button class="button-secondary" @click="togglePreview">Preview</button>
+      <button class="button-secondary" @click="showConfig = !showConfig">Config</button>
       <button class="button-secondary" @click="showAbout = !showAbout">About</button>
     </div>
     <AboutPane v-if="showAbout" />
+    <div v-if="showConfig" class="config-panel">
+      <label>
+        Mutation chance: <strong>{{ (store.mutationChance * 100).toFixed(0) }}%</strong>
+        <input type="range" min="0" max="1" step="0.01" v-model.number="store.mutationChance">
+      </label>
+    </div>
     <ul id="game-list">
       <DrawingObject
         v-for="obj in store.drawingObjects"
@@ -29,6 +36,7 @@ import AboutPane from './AboutPane.vue';
 const store = usePlantsStore();
 const isPreview = { value: false };
 const showAbout = ref(false);
+const showConfig = ref(false);
 
 onMounted(() => {
   store.init(24);
@@ -38,9 +46,6 @@ onMounted(() => {
   });
 });
 
-function breedChecked() {
-  alert('todo');
-}
 
 function togglePreview() {
   isPreview.value = !isPreview.value;

@@ -3,6 +3,7 @@ import { ref } from 'vue';
 
 export const usePlantsStore = defineStore('plants', () => {
   const drawingObjects = ref([]);
+  const mutationChance = ref(0.1);
 
   function init(count = 24) {
     drawingObjects.value = [];
@@ -25,14 +26,29 @@ export const usePlantsStore = defineStore('plants', () => {
     }
   }
 
-  function breed(drag, drop, mutation = 0.1) {
+  function breed(drag, drop) {
     const dragGenes = drag.genes.clone();
     const dropGenes = drop.genes.clone();
     drawingObjects.value.forEach(drawing => {
       if (drawing.locked !== true) {
-        drawing.drawing.genes = dragGenes.breed(dropGenes, 0.1, mutation);
+        drawing.drawing.genes = dragGenes.breed(dropGenes, 0.1, mutationChance.value);
         drawing.drawing.draw();
       }
+    });
+  }
+
+  function breedChecked() {
+    const parents = drawingObjects.value.filter(o => o.locked === true);
+    if (parents.length < 2) return;
+    drawingObjects.value.forEach(drawing => {
+      if (drawing.locked === true) return;
+      const a = parents[Math.floor(Math.random() * parents.length)];
+      let b = parents[Math.floor(Math.random() * parents.length)];
+      if (parents.length > 1) {
+        while (b === a) b = parents[Math.floor(Math.random() * parents.length)];
+      }
+      drawing.drawing.genes = a.drawing.genes.clone().breed(b.drawing.genes.clone(), 0.1, mutationChance.value);
+      drawing.drawing.draw();
     });
   }
 
@@ -68,5 +84,5 @@ export const usePlantsStore = defineStore('plants', () => {
     });
   }
 
-  return { drawingObjects, init, handleDrop, random, save, load };
+  return { drawingObjects, mutationChance, init, handleDrop, breedChecked, random, save, load };
 });

@@ -62,6 +62,22 @@ export const usePlantsStore = defineStore('plants', () => {
     drag.draw();
   }
 
+  function moveToFront(id) {
+    const arr = drawingObjects.value;
+    const idx = arr.findIndex(o => o.id === id);
+    const firstUnlocked = arr.findIndex(o => o.locked !== true);
+    if (idx === -1 || firstUnlocked === -1 || idx <= firstUnlocked) return;
+    [arr[firstUnlocked], arr[idx]] = [arr[idx], arr[firstUnlocked]];
+  }
+
+  function moveToBack(id) {
+    const arr = drawingObjects.value;
+    const idx = arr.findIndex(o => o.id === id);
+    const lastLocked = arr.reduce((last, o, i) => o.locked === true ? i : last, -1);
+    if (idx === -1 || lastLocked === -1 || idx >= lastLocked) return;
+    [arr[lastLocked], arr[idx]] = [arr[idx], arr[lastLocked]];
+  }
+
   function random() {
     drawingObjects.value.forEach(drawing => {
       if (drawing.locked !== true) {
@@ -71,22 +87,42 @@ export const usePlantsStore = defineStore('plants', () => {
     });
   }
 
-  function save() {
+  function save(name) {
     const saveData = {};
     drawingObjects.value.forEach(drawing => {
       saveData['drawing' + drawing.id] = drawing.drawing.genes.toJSON();
     });
-    localStorage.setItem('plants', JSON.stringify(saveData));
+    saveData._count = drawingObjects.value.length;
+    localStorage.setItem('plants:' + name, JSON.stringify(saveData));
   }
 
-  function load() {
-    const data = JSON.parse(localStorage.getItem('plants'));
+  function getSaveCount(name) {
+    const data = JSON.parse(localStorage.getItem('plants:' + name));
+    if (!data) return 24;
+    return data._count ?? Object.keys(data).filter(k => k.startsWith('drawing')).length;
+  }
+
+  function load(name) {
+    const data = JSON.parse(localStorage.getItem('plants:' + name));
+    if (!data) return;
     Object.entries(data).forEach(([k, v]) => {
       const objectId = parseInt(k.replace('drawing', ''), 10);
-      drawingObjects.value[objectId].drawing.genes.fromJSON(v);
-      drawingObjects.value[objectId].drawing.draw();
+      if (drawingObjects.value[objectId]) {
+        drawingObjects.value[objectId].drawing.genes.fromJSON(v);
+        drawingObjects.value[objectId].drawing.draw();
+      }
     });
   }
 
-  return { drawingObjects, mutationChance, init, handleDrop, breedChecked, random, save, load };
+  function listSaves() {
+    return Object.keys(localStorage)
+      .filter(k => k.startsWith('plants:'))
+      .map(k => k.slice('plants:'.length));
+  }
+
+  function deleteSave(name) {
+    localStorage.removeItem('plants:' + name);
+  }
+
+  return { drawingObjects, mutationChance, init, handleDrop, breedChecked, random, moveToFront, moveToBack, save, load, getSaveCount, listSaves, deleteSave };
 });

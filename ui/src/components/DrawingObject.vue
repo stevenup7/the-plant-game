@@ -44,6 +44,8 @@ let dragCounter = 0;
 
 watch(locked, (val) => {
   props.object.locked = val;
+  if (val) store.moveToFront(props.object.id);
+  else store.moveToBack(props.object.id);
 });
 
 function rasterize() {
@@ -164,24 +166,25 @@ function onDragOver(event) {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85em;
-  font-weight: bold;
-  color: white;
+  font-size: 0.7em;
+  font-weight: 500;
+  color: var(--color-text-subtle);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  opacity: 0.6;
+  letter-spacing: 0.12em;
+  opacity: 0.5;
   transition: opacity 0.1s;
 }
 
 .drop-zone.active {
-  opacity: 0.85;
+  opacity: 1;
+  color: var(--color-text-muted);
 }
 
 .drop-zone-breed {
-  background: rgba(44, 74, 53, 0.72);
+  background: rgba(28, 27, 25, 0.06);
 }
 
 .drop-zone-swap {
-  background: rgba(55, 95, 160, 0.68);
+  background: rgba(28, 27, 25, 0.06);
 }
 </style>

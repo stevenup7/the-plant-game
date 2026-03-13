@@ -1,6 +1,6 @@
 <template>
   <div class="about-overlay" @click.self="emit('close')">
-  <div class="content" id="about-pane">
+  <div class="content about-pane">
     <button class="about-close" @click="emit('close')" aria-label="Close">×</button>
     <h2>What is this thing?</h2>
     <p>The plant game is a little bit of code that draws pictures of "plants" </p>

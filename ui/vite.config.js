@@ -4,6 +4,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [vue()],
+  publicDir: resolve(__dirname, '../server/dist'),
   build: {
     outDir: '../server/dist/js',
     emptyOutDir: false,
@@ -19,10 +20,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+      'vue': 'vue/dist/vue.esm-bundler.js',
     },
   },
   server: {
     port: 8000,
-    open: '/server/dist/index.html',
+    open: '/',
   },
 });

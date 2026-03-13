@@ -1,4 +1,5 @@
-import DrawingObject from './flower.js';
+// import DrawingObject from './flower.js';
+import DrawingObject from './plant.js'
 import { createApp } from 'vue';
 import Snap from 'snapsvg-cjs';
 import _ from 'lodash';
@@ -39,6 +40,7 @@ const DrawingObjectComponent = {
 		}
 	},
 	mounted: function () {
+		console.log("mounted")
 		var plantCanvas = document.querySelector('#oc' + this.object.id);
 		var width = plantCanvas.clientWidth;
 		this.half = width / 2;
@@ -117,9 +119,9 @@ const App = {
 		};
 	},
 	created: function () {
-		console.log("app created")
+		console.log("app created... building")
 		for(var i = 0; i < 24; i++) {
-			//console.log('pushing');
+			console.log('pushing');
 			this.drawingObjects.push({id: i});
 		}
 	},

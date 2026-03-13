@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import _ from 'lodash';
 
 export const usePlantsStore = defineStore('plants', () => {
   const drawingObjects = ref([]);
@@ -62,7 +61,7 @@ export const usePlantsStore = defineStore('plants', () => {
 
   function load() {
     const data = JSON.parse(localStorage.getItem('plants'));
-    _.forEach(data, (v, k) => {
+    Object.entries(data).forEach(([k, v]) => {
       const objectId = parseInt(k.replace('drawing', ''), 10);
       drawingObjects.value[objectId].drawing.genes.fromJSON(v);
       drawingObjects.value[objectId].drawing.draw();

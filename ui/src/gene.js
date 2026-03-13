@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { randomInt } from './util.js';
 
 class Gene {
@@ -53,7 +52,7 @@ class Gene {
   }
 
   randomize () {
-    _.each(this._definition, (definition, genename) => {
+    Object.entries(this._definition).forEach(([genename, definition]) => {
       this.randomizeGene(definition, genename);
     });
   }
@@ -134,15 +133,15 @@ class Gene {
   }
 
   mutate (mutationChance) {
-    _.each(this._definition, (definitionValue, genename) => {
+    Object.entries(this._definition).forEach(([genename]) => {
       this.mutateGene(genename, mutationChance);
     });
 
   }
 
   doBreed (otherGene, childGene, thisIsSource, xoverChance, mutationChance) {
-    _.each(this._definition, (definition, genename) => {
-      if (_.isArray(this._values[genename])) {
+    Object.keys(this._definition).forEach((genename) => {
+      if (Array.isArray(this._values[genename])) {
         var len = this._values[genename].length;
         childGene._values[genename] = [];
         for(var i = 0; i < len; i++) {
@@ -178,7 +177,7 @@ class Gene {
     // make a new clone
     var theClone = new Gene(this._name, this._definition);
     // clone values into new object
-    theClone._values = _.clone(this._values);
+    theClone._values = { ...this._values };
     return theClone;
   }
 }
@@ -197,8 +196,8 @@ class GeneSet {
     this._geneDefinition = geneDefinition;
 
     if(initGenes) {
-      _.each(geneDefinition, (geneDefinition, geneName) => {
-        this._genes[geneName] = new Gene(geneName, geneDefinition);
+      Object.entries(geneDefinition).forEach(([geneName, geneDef]) => {
+        this._genes[geneName] = new Gene(geneName, geneDef);
       });
     }
   }
@@ -207,7 +206,7 @@ class GeneSet {
     var childGeneSet = new  GeneSet(this._geneDefinition);
     var thisIsSource = Math.random() > 0.5;
 
-    _.each(this._geneDefinition, (attr, key) => {
+    Object.keys(this._geneDefinition).forEach((key) => {
       this._genes[key].doBreed(
         otherGeneSet._genes[key], childGeneSet._genes[key], thisIsSource, xoverChance, mutationChance);
 
@@ -220,14 +219,14 @@ class GeneSet {
   }
 
   randomize () {
-    _.each(this._genes, (gene) => {
+    Object.values(this._genes).forEach((gene) => {
       gene.randomize();
     });
   }
 
   clone () {
     var theClone = new GeneSet(this._geneDefinition, false);
-    _.each(this._genes, (gene) => {
+    Object.values(this._genes).forEach((gene) => {
       theClone._genes[gene._name] = gene.clone();
     });
     return theClone;
@@ -238,7 +237,7 @@ class GeneSet {
       definition: this._geneDefinition,
       geneValues: {}
     };
-    _.each(this._genes, (gene) => {
+    Object.values(this._genes).forEach((gene) => {
       strobj.geneValues[gene._name] = gene._values;
     });
     return JSON.stringify(strobj, null, '  ' );
@@ -248,8 +247,7 @@ class GeneSet {
     var data = JSON.parse(jsonString);
     this.parseDefinition(data.definition, true);
 
-    _.each(this._genes, (gene) => {
-
+    Object.values(this._genes).forEach((gene) => {
       gene._values = data.geneValues[gene._name];
     });
 

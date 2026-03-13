@@ -4,15 +4,15 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [vue()],
-  publicDir: resolve(__dirname, '../server/dist'),
+  publicDir: 'public',
   build: {
-    outDir: '../server/dist/js',
+    outDir: '../server/dist',
     emptyOutDir: false,
     rollupOptions: {
       input: resolve(__dirname, 'src/app.js'),
       output: {
         format: 'es',
-        entryFileNames: 'app.js',
+        entryFileNames: 'js/app.js',
         inlineDynamicImports: true,
       },
     },

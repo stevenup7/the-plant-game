@@ -25,12 +25,8 @@
     "vitest": "^4.0.17"
   },
   "dependencies": {
-    "chroma-js": "^3.1.4",
-    "eve": "^0.5.4",
-    "lodash": "^4.17.21",
     "pinia": "^3.0.4",
     "seedrandom": "^3.0.5",
-    "snapsvg": "^0.5.1",
     "snapsvg-cjs": "^0.0.6",
     "vue": "^3.5.27"
   }

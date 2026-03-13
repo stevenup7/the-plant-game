@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { GeneSet, randomInt } from './gene.js';
 import { Point, Line } from './math2d.js';
 import { SColor } from './colors.js';
@@ -10,7 +9,7 @@ var PLANT_GENES = {
 	general: {
 		hasRandomness:		["int",				 0, 1],
 		structure:				["int",				 0, 1]
-	},
+	}, 
 	stem: {
 		thickness:				["intArray",	 MAX_DEPTH + 1, 1, 10],
 		angle:						["intArray",	 MAX_DEPTH, 5, 100],
@@ -232,13 +231,16 @@ class Plant extends BreedableDrawing {
 		var colorArray = c1.scaleToColor(c2, this.leafNodes.length);
 		//console.log('style', style);
 		if (style === 1) {
-			colorArray = _.shuffle(colorArray);
+			for (let i = colorArray.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[colorArray[i], colorArray[j]] = [colorArray[j], colorArray[i]];
+			}
 		}
 		// sort by x or sort by x
 		if (style === 2 || style === 3) {
-			this.leafNodes = _.sortBy(this.leafNodes, ['x']);
+			this.leafNodes = [...this.leafNodes].sort((a, b) => a.x - b.x);
 			if (style === 3) {
-				this.leafNodes = _.reverse(this.leafNodes);
+				this.leafNodes.reverse();
 			}
 		}
 

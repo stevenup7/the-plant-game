@@ -1,0 +1,15 @@
+<template>
+  <div class="content" id="about-pane">
+    <h2>What is this thing?</h2>
+    <p>The plant game is a little bit of code that draws pictures of "plants" </p>
+    <h2>How do I play the plant game ?</h2>
+    <p>Its easy just drag one plant onto another one and they will "breed" their
+      "children" will have some characteristics of both parents.</p>
+    <p>The screen is divided up into two parts parents and children, the parents are not
+      replaced when you breed the children will be overwritten every time you breed.</p>
+
+    <h2>Who would make this weird thing ?</h2>
+    <p>The plant game was written by steven upritchard
+      <a href="mailto:plant-game@upritchard.com">plant-game@upritchard.com</a></p>
+  </div>
+</template>

@@ -1,3 +1,47 @@
+body {
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+
+
+/* Grid */
+
+#game-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    list-style: none;
+}
+
+@media (min-width: 48em) {
+    #game-list {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (min-width: 64em) {
+    #game-list {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+/* Buttons */
+.game-menu button {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    margin: 0.2rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875em;
+    vertical-align: middle;
+}
+
+/* Form */
+.edit-form fieldset {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 1em;
+}
+
 .header h1 {
     margin: 0.2em 0;
     font-size: 3em;
@@ -25,7 +69,7 @@
     background-color: white;
 }
 
-.plant-container : hover{
+.plant-container:hover{
     border: 1px solid #efefef;
 }
 
@@ -55,12 +99,9 @@ svg line {
     color: #999;
 }
 
-svg {
-    nopacity: 0.1;
-}
+
 .game-menu {
     padding: 5px;
-    background-color: #ccc;
     color: white;
     position: fixed;
     top: 0;

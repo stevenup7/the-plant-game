@@ -117,6 +117,105 @@ body {
 }
 
 
+/* ===== BURGER MENU ===== */
+
+.burger-button {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-2);
+  border-radius: var(--radius);
+  flex-shrink: 0;
+  transition: background 0.12s ease;
+}
+
+.burger-button:hover {
+  background: var(--color-border-subtle);
+}
+
+.burger-icon,
+.burger-icon::before,
+.burger-icon::after {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--color-text-muted);
+  border-radius: 2px;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+  position: relative;
+}
+
+.burger-icon::before,
+.burger-icon::after {
+  content: '';
+  position: absolute;
+  left: 0;
+}
+
+.burger-icon::before { top: -6px; }
+.burger-icon::after  { top:  6px; }
+
+.burger-icon.open {
+  background: transparent;
+}
+
+.burger-icon.open::before {
+  top: 0;
+  transform: rotate(45deg);
+}
+
+.burger-icon.open::after {
+  top: 0;
+  transform: rotate(-45deg);
+}
+
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border-subtle);
+  z-index: 50;
+  position: relative;
+  width: 100%;
+}
+
+.mobile-menu-item {
+  width: 100%;
+  text-align: left;
+  padding: var(--space-4) var(--space-6);
+  border-radius: 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-size: 0.875rem;
+}
+
+.mobile-menu-item:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 47.9375em) {
+  .header-actions {
+    display: none;
+  }
+
+  .burger-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-menu {
+    display: flex;
+  }
+
+  .header-tagline {
+    display: block;
+    margin-left: 0;
+    margin-top: var(--space-1);
+  }
+}
+
+
 /* ===== GRID ===== */
 
 ul#game-list {
@@ -391,9 +490,14 @@ svg line {
   background: var(--color-surface);
   padding: var(--space-8) var(--space-8) var(--space-6);
   border-radius: var(--radius-lg);
+  max-height: 90vh;
+  overflow-y: auto;
   max-width: 460px;
   width: 90%;
   box-shadow: var(--shadow-lg);
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .about-close {

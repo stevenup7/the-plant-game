@@ -7,13 +7,26 @@
         <button class="button-header" @click="openLoad">load</button>
         <button class="button-header" @click="togglePreview">preview</button>
         <button class="button-header" @click="showConfig = !showConfig">config</button>
+        <button class="button-header" @click="showHelp = !showHelp">help</button>
         <button class="button-header" @click="showAbout = !showAbout">about</button>
       </div>
+      <button class="burger-button" @click="menuOpen = !menuOpen" :aria-expanded="menuOpen" aria-label="Menu">
+        <span class="burger-icon" :class="{ open: menuOpen }"></span>
+      </button>
+    </div>
+    <div v-if="menuOpen" class="mobile-menu" @click="menuOpen = false">
+      <button class="button-header mobile-menu-item" @click="openSave">save</button>
+      <button class="button-header mobile-menu-item" @click="openLoad">load</button>
+      <button class="button-header mobile-menu-item" @click="togglePreview">preview</button>
+      <button class="button-header mobile-menu-item" @click="showConfig = !showConfig">config</button>
+      <button class="button-header mobile-menu-item" @click="showHelp = !showHelp">help</button>
+      <button class="button-header mobile-menu-item" @click="showAbout = !showAbout">about</button>
     </div>
     <div class="game-menu">
       <button class="button-secondary" @click="store.random()"><u v-if="ctrlHeld">r</u><template v-else>r</template>andom</button>
       <button class="button-secondary" @click="store.breedChecked()"><u v-if="ctrlHeld">b</u><template v-else>b</template>reed checked</button>
     </div>
+    <HelpPane v-if="showHelp" @close="showHelp = false" />
     <AboutPane v-if="showAbout" @close="showAbout = false" />
 
     <!-- Save dialog -->
@@ -81,14 +94,17 @@ import { ref, onMounted, nextTick } from 'vue';
 import { usePlantsStore } from '../stores/plants.js';
 import DrawingObject from './DrawingObject.vue';
 import AboutPane from './AboutPane.vue';
+import HelpPane from './HelpPane.vue';
 
 const store = usePlantsStore();
 const isPreview = ref(false);
 const showAbout = ref(false);
+const showHelp = ref(false);
 const showConfig = ref(false);
 const count = ref(24);
 const ctrlHeld = ref(false);
 
+const menuOpen = ref(false);
 const showSaveDialog = ref(false);
 const showLoadDialog = ref(false);
 const saveName = ref('');
@@ -137,6 +153,8 @@ onMounted(() => {
       showSaveDialog.value = false;
       showLoadDialog.value = false;
       showAbout.value = false;
+      showHelp.value = false;
+      menuOpen.value = false;
     }
   });
   document.body.addEventListener('keyup', (e) => {

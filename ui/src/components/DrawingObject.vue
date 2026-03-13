@@ -88,6 +88,17 @@ onMounted(() => {
 
 function onDragStart(event) {
   event.dataTransfer.setData('text/plain', props.object.id);
+  const src = rasterCanvas.value;
+  if (src && src.width && src.height) {
+    const ghost = document.createElement('canvas');
+    ghost.width = src.width;
+    ghost.height = src.height;
+    ghost.getContext('2d').drawImage(src, 0, 0);
+    ghost.style.cssText = 'position:fixed;top:-9999px;left:-9999px;';
+    document.body.appendChild(ghost);
+    event.dataTransfer.setDragImage(ghost, ghost.width / 2, ghost.height / 2);
+    requestAnimationFrame(() => document.body.removeChild(ghost));
+  }
 }
 
 function onDrop(event) {
@@ -167,10 +178,10 @@ function onDragOver(event) {
 }
 
 .drop-zone-breed {
-  background: rgba(28, 184, 65, 0.7);
+  background: rgba(44, 74, 53, 0.72);
 }
 
 .drop-zone-swap {
-  background: rgba(66, 184, 221, 0.7);
+  background: rgba(55, 95, 160, 0.68);
 }
 </style>

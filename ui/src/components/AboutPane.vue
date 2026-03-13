@@ -1,5 +1,7 @@
 <template>
+  <div class="about-overlay" @click.self="emit('close')">
   <div class="content" id="about-pane">
+    <button class="about-close" @click="emit('close')" aria-label="Close">×</button>
     <h2>What is this thing?</h2>
     <p>The plant game is a little bit of code that draws pictures of "plants" </p>
     <h2>How do I play the plant game ?</h2>
@@ -12,4 +14,9 @@
     <p>The plant game was written by steven upritchard
       <a href="mailto:plant-game@upritchard.com">plant-game@upritchard.com</a></p>
   </div>
+  </div>
 </template>
+
+<script setup>
+const emit = defineEmits(['close']);
+</script>

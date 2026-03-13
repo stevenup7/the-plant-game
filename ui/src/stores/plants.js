@@ -6,9 +6,13 @@ export const usePlantsStore = defineStore('plants', () => {
   const mutationChance = ref(0.1);
 
   function init(count = 24) {
-    drawingObjects.value = [];
-    for (let i = 0; i < count; i++) {
-      drawingObjects.value.push({ id: i });
+    const current = drawingObjects.value;
+    if (count > current.length) {
+      for (let i = current.length; i < count; i++) {
+        current.push({ id: i });
+      }
+    } else {
+      drawingObjects.value = current.slice(0, count);
     }
   }
 

@@ -4,4 +4,4 @@ import App from './components/App.vue';
 
 const app = createApp(App);
 app.use(createPinia());
-app.mount('#game');
+app.mount('#layout');
